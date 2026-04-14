@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { url, business_name, positioning, keywords, target_subreddits, tone } =
+    const { url, business_name, positioning, keywords, target_subreddits, tone, package: pkg } =
       await req.json()
 
     const { error } = await supabase.from('profiles').upsert(
@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
         keywords,
         target_subreddits,
         tone,
+        ...(pkg !== undefined && { package: pkg }),
         onboarded: true,
       },
       { onConflict: 'user_id' }

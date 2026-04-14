@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { reportId, profileId } = await req.json()
+  const { reportId, profileId, selectedSubreddits, package: tier } = await req.json()
   if (!reportId || !profileId) {
     return NextResponse.json({ error: 'Missing reportId or profileId' }, { status: 400 })
   }
@@ -49,16 +49,25 @@ export async function POST(req: NextRequest) {
 
     if (profileError || !profile) throw new Error('Profile not found')
 
-    // ── 3. Start Apify Reddit scraper ──
+    // ── 3. Resolve subreddits and tier ──
+    const subreddits: string[] =
+      selectedSubreddits && selectedSubreddits.length > 0
+        ? selectedSubreddits
+        : (profile.target_subreddits as string[] | null ?? []).slice(0, 5)
+
+    const maxPostCount = tier === 'growth' ? 5 : 3
+    const maxItems = subreddits.length * maxPostCount + 5 // small buffer
+
+    // ── 4. Start Apify Reddit scraper ──
     const apifyRes = await fetch(
       `https://api.apify.com/v2/acts/betterdevsscrape~reddit-scraper/runs?token=${token}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          subreddits: profile.target_subreddits,
-          maxItems: 30,
-          maxPostCount: 5,
+          subreddits,
+          maxItems,
+          maxPostCount,
           skipComments: true,
           sort: 'hot',
           minScore: 5,
@@ -73,7 +82,7 @@ export async function POST(req: NextRequest) {
     let datasetId: string = apifyData?.data?.defaultDatasetId ?? ''
     if (!runId) throw new Error('No Apify run ID returned')
 
-    // ── 4. Poll for completion (every 5s, max 120 attempts = 10 min) ──
+    // ── 5. Poll for completion (every 5s, max 120 attempts = 10 min) ──
     let succeeded = false
     for (let i = 0; i < 120; i++) {
       await new Promise(r => setTimeout(r, 5000))
@@ -96,7 +105,7 @@ export async function POST(req: NextRequest) {
 
     if (!succeeded) throw new Error('Apify run did not complete within timeout')
 
-    // ── 5. Fetch dataset items ──
+    // ── 6. Fetch dataset items ──
     const datasetRes = await fetch(
       `https://api.apify.com/v2/datasets/${datasetId}/items?token=${token}&limit=50`
     )
@@ -106,7 +115,36 @@ export async function POST(req: NextRequest) {
 
     if (scrapedPosts.length === 0) throw new Error('No posts returned from Apify dataset')
 
-    // ── 6. Claude analysis ──
+    // ── 7. Deduplicate: filter out URLs seen this week for this profile ──
+    const weekStart = new Date()
+    weekStart.setHours(0, 0, 0, 0)
+    // Roll back to Monday
+    const dayOfWeek = weekStart.getDay()
+    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+    weekStart.setDate(weekStart.getDate() - daysToMonday)
+
+    const { data: seenThreads } = await db
+      .from('threads')
+      .select('url')
+      .in(
+        'report_id',
+        (
+          await db
+            .from('reports')
+            .select('id')
+            .eq('profile_id', profileId)
+            .gte('generated_at', weekStart.toISOString())
+        ).data?.map(r => r.id) ?? []
+      )
+
+    const seenUrls = new Set((seenThreads ?? []).map(t => t.url as string))
+    const freshPosts = scrapedPosts.filter(
+      post => post.url && !seenUrls.has(post.url as string)
+    )
+    // Fall back to all scraped posts if everything has been seen (edge case)
+    const postsToAnalyze = freshPosts.length > 0 ? freshPosts : scrapedPosts
+
+    // ── 8. Claude analysis ──
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 4000,
@@ -151,12 +189,12 @@ Rules:
 - comment_template must be authentic and non-promotional — add genuine value to the conversation
 
 Posts to analyze:
-${JSON.stringify(scrapedPosts.slice(0, 25))}`,
+${JSON.stringify(postsToAnalyze.slice(0, 25))}`,
         },
       ],
     })
 
-    // ── 7. Parse Claude response ──
+    // ── 9. Parse Claude response ──
     const raw = message.content[0].type === 'text' ? message.content[0].text : ''
     const cleaned = raw.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim()
     const parsed: { strategy_note: string; threads: Thread[] } = JSON.parse(cleaned)
@@ -164,13 +202,13 @@ ${JSON.stringify(scrapedPosts.slice(0, 25))}`,
     const threads = parsed.threads ?? []
     const highPriorityCount = threads.filter(t => t.priority === 'high').length
 
-    // ── 8. Update report + insert threads ──
+    // ── 10. Update report + insert threads ──
     await db
       .from('reports')
       .update({
         status: 'complete',
         strategy_note: parsed.strategy_note,
-        subreddits_scanned: (profile.target_subreddits as string[]).length,
+        subreddits_scanned: subreddits.length,
         threads_found: threads.length,
         high_priority_count: highPriorityCount,
       })
