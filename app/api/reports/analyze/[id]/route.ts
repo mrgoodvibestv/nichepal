@@ -75,16 +75,26 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       `https://api.apify.com/v2/datasets/${datasetId}/items?token=${token}&limit=100`
     )
     const allItems: unknown[] = await datasetRes.json()
+
+    // Debug: surface Apify response shape in Vercel logs
+    if (Array.isArray(allItems)) {
+      const rawItems = allItems as Record<string, unknown>[]
+      console.log('[analyze] apify dataset:', {
+        total: rawItems.length,
+        communityItems: rawItems.filter(x => x.dataType === 'community').length,
+        postItems: rawItems.filter(x => x.dataType !== 'community').length,
+        dataTypes: Array.from(new Set(rawItems.map(x => x.dataType))),
+      })
+    }
+
     const scrapedPosts = Array.isArray(allItems)
       ? allItems.filter(
           (p: unknown) => (p as Record<string, unknown>).dataType !== 'community'
         )
       : []
 
-    if (scrapedPosts.length === 0) {
-      await db.from('reports').update({ status: 'failed' }).eq('id', params.id)
-      return NextResponse.json({ error: 'No posts in dataset' }, { status: 422 })
-    }
+    // No hard-fail on empty posts — pass empty array to Claude for graceful degradation.
+    // Claude will return strategy_note + empty threads; report is marked complete with 0 threads.
 
     // ── 6. Deduplicate: filter URLs seen this week ──
     const weekStart = new Date()
