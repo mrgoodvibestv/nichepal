@@ -37,7 +37,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     const { data: reportCheck, error: checkError } = await supabase
       .from('reports')
-      .select('id, status, apify_dataset_id, profile_id')
+      .select('id, status, apify_dataset_id, profile_id, selected_subreddits')
       .eq('id', params.id)
       .single()
 
@@ -59,10 +59,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const token = process.env.APIFY_API_TOKEN!
     const { profile_id: profileId, apify_dataset_id: datasetId } = reportCheck
 
-    // ── 4. Fetch profile for Claude context ──
+    // ── 4. Fetch profile for Claude context + tier ──
     const { data: profile, error: profileError } = await db
       .from('profiles')
-      .select('business_name, positioning, keywords, target_subreddits')
+      .select('business_name, positioning, keywords, target_subreddits, package')
       .eq('id', profileId)
       .single()
 
@@ -116,12 +116,18 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     })
     const postsToAnalyze = freshPosts.length > 0 ? freshPosts : scrapedPosts
 
-    // Count subreddits actually seen in this dataset
-    const subredditsScanned = new Set(
-      scrapedPosts
-        .map((p: unknown) => (p as Record<string, unknown>).subreddit as string)
-        .filter(Boolean)
-    ).size
+    // subreddits_scanned = how many were selected for this run
+    const selectedSubs = (reportCheck.selected_subreddits as string[] | null) ?? []
+    const subredditsScanned = selectedSubs.length > 0
+      ? selectedSubs.length
+      : new Set(
+          scrapedPosts
+            .map((p: unknown) => (p as Record<string, unknown>).subreddit as string)
+            .filter(Boolean)
+        ).size
+
+    // Tier-based thread cap: growth users get more output from Claude
+    const maxThreads = (profile.package as string) === 'growth' ? 15 : 9
 
     // ── 7. Claude analysis ──
     const message = await anthropic.messages.create({
@@ -160,7 +166,7 @@ Analyze these Reddit posts for relevance to this business. Return a JSON object:
 
 Rules:
 - Only include threads with relevance_score >= 5
-- Max 20 threads, sorted by priority (high first) then relevance_score desc
+- Max ${maxThreads} threads, sorted by priority (high first) then relevance_score desc
 - thread_type: trending = posted <48hrs and >50 upvotes, rising = gaining traction, evergreen = always relevant topic
 - priority high = engage within 24 hours, medium = engage this week
 - comment_template must be authentic and non-promotional — add genuine value to the conversation

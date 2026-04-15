@@ -40,9 +40,8 @@ export async function POST(req: NextRequest) {
         ? selectedSubreddits.slice(0, MAX_SELECTED)
         : (profile.target_subreddits as string[] | null ?? []).slice(0, 5)
 
-    const tier = (profile.package as string) ?? 'starter'
-    const maxPostCount = tier === 'growth' ? 5 : 3
-    const maxItems = subsToScan.length * maxPostCount + 5
+    const maxPostCount = 8
+    const maxItems = subsToScan.length * 8 + 10
 
     // Create report row
     const db = createServiceClient()
@@ -72,7 +71,7 @@ export async function POST(req: NextRequest) {
           maxPostCount,
           skipComments: true,
           sort: 'hot',
-          minScore: 5,
+          minScore: 1,
           proxy: { useApifyProxy: true },
         }),
       }
@@ -92,10 +91,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No Apify run ID returned' }, { status: 500 })
     }
 
-    // Save run IDs to the report so status + analyze routes can find them
+    // Save run IDs + selected subreddits so analyze route can read them
     await db
       .from('reports')
-      .update({ apify_run_id: runId, apify_dataset_id: datasetId })
+      .update({
+        apify_run_id: runId,
+        apify_dataset_id: datasetId,
+        selected_subreddits: subsToScan,
+      })
       .eq('id', report.id)
 
     // Total time: ~2s ✅
