@@ -72,17 +72,24 @@ export default function ReportFilters({ threads }: { threads: Thread[] }) {
         <div className="h-4 w-px bg-gray-200" />
 
         {/* Subreddit dropdown */}
-        <select
-          value={subreddit}
-          onChange={e => setSubreddit(e.target.value)}
-          className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#4B6BF5] bg-white"
-        >
-          {subreddits.map(s => (
-            <option key={s} value={s}>
-              {s === 'all' ? 'All subreddits' : `r/${s}`}
-            </option>
-          ))}
-        </select>
+        <div className="relative">
+          <select
+            value={subreddit}
+            onChange={e => setSubreddit(e.target.value)}
+            className="appearance-none bg-white border border-gray-200 rounded-lg pl-3 pr-8 py-1.5 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#4B6BF5] cursor-pointer w-full"
+          >
+            {subreddits.map(s => (
+              <option key={s} value={s}>
+                {s === 'all' ? 'All subreddits' : `r/${s}`}
+              </option>
+            ))}
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
+            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
 
         <span className="ml-auto text-sm text-gray-400">{filtered.length} threads</span>
       </div>

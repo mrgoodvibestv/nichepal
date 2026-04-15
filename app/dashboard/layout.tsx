@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import Sidebar from '@/components/Sidebar'
+import DashboardShell from './DashboardShell'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -20,9 +20,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (!profile?.onboarded) redirect('/onboarding')
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar credits={profile.credits ?? 0} />
-      <main className="flex-1 overflow-y-auto bg-gray-50">{children}</main>
-    </div>
+    <DashboardShell credits={profile.credits ?? 0}>
+      {children}
+    </DashboardShell>
   )
 }
