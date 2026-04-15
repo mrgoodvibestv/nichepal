@@ -3,12 +3,20 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 
+interface Audience {
+  id: string
+  name: string
+  description: string
+  goal: string
+  subreddits: string[]
+}
+
 interface ProfileDraft {
   business_name: string
   positioning: string
   keywords: string[]
-  target_subreddits: string[]
   tone: string
+  audiences: Audience[]
 }
 
 const SCAN_MESSAGES = [
@@ -25,10 +33,11 @@ const TONE_OPTIONS = [
   { label: 'Storyteller', value: 'storyteller' },
 ]
 
+const MAX_AUDIENCES = 4
+
 export default function OnboardingPage() {
   const router = useRouter()
 
-  // Step state
   const [step, setStep] = useState<1 | 2 | 3>(1)
 
   // Step 1
@@ -37,44 +46,35 @@ export default function OnboardingPage() {
   const [scanMsgIdx, setScanMsgIdx] = useState(0)
   const [scanError, setScanError] = useState('')
 
-  // Step 2 — editable profile fields
+  // Step 2
   const [businessName, setBusinessName] = useState('')
   const [positioning, setPositioning] = useState('')
   const [keywords, setKeywords] = useState<string[]>([])
-  const [subreddits, setSubreddits] = useState<string[]>([])
   const [tone, setTone] = useState('peer-to-peer')
+  const [audiences, setAudiences] = useState<Audience[]>([])
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
 
-  // Inline add inputs
-  const [addingKeyword, setAddingKeyword] = useState(false)
-  const [newKeyword, setNewKeyword] = useState('')
-  const [addingSubreddit, setAddingSubreddit] = useState(false)
-  const [newSubreddit, setNewSubreddit] = useState('')
-  const newKeywordRef = useRef<HTMLInputElement>(null)
-  const newSubredditRef = useRef<HTMLInputElement>(null)
+  // Per-audience "add subreddit" inline state
+  const [addingSubForId, setAddingSubForId] = useState<string | null>(null)
+  const [newSubInput, setNewSubInput] = useState('')
+  const newSubRef = useRef<HTMLInputElement>(null)
 
-  // Cycle scan messages while scanning
   useEffect(() => {
     if (!scanning) return
     const id = setInterval(() => setScanMsgIdx(i => (i + 1) % SCAN_MESSAGES.length), 1500)
     return () => clearInterval(id)
   }, [scanning])
 
-  // Auto-redirect from step 3
   useEffect(() => {
     if (step !== 3) return
     const id = setTimeout(() => router.push('/dashboard'), 2000)
     return () => clearTimeout(id)
   }, [step, router])
 
-  // Focus inline add inputs
   useEffect(() => {
-    if (addingKeyword) newKeywordRef.current?.focus()
-  }, [addingKeyword])
-  useEffect(() => {
-    if (addingSubreddit) newSubredditRef.current?.focus()
-  }, [addingSubreddit])
+    if (addingSubForId) newSubRef.current?.focus()
+  }, [addingSubForId])
 
   async function handleScan(e: React.FormEvent) {
     e.preventDefault()
@@ -92,8 +92,8 @@ export default function OnboardingPage() {
       setBusinessName(data.business_name || '')
       setPositioning(data.positioning || '')
       setKeywords(data.keywords || [])
-      setSubreddits(data.target_subreddits || [])
       setTone(data.tone || 'peer-to-peer')
+      setAudiences(data.audiences || [])
       setStep(2)
     } catch (err: unknown) {
       setScanError(err instanceof Error ? err.message : 'Scan failed. Please try again.')
@@ -109,7 +109,7 @@ export default function OnboardingPage() {
       const res = await fetch('/api/profile/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url, business_name: businessName, positioning, keywords, target_subreddits: subreddits, tone }),
+        body: JSON.stringify({ url, business_name: businessName, positioning, keywords, tone, audiences }),
       })
       const data: { success?: boolean; error?: string } = await res.json()
       if (!res.ok) throw new Error(data.error || 'Save failed')
@@ -121,18 +121,37 @@ export default function OnboardingPage() {
     }
   }
 
-  function commitKeyword() {
-    const kw = newKeyword.trim()
-    if (kw && !keywords.includes(kw)) setKeywords(prev => [...prev, kw])
-    setNewKeyword('')
-    setAddingKeyword(false)
+  // ── Audience helpers ──
+  function updateAudience(id: string, updates: Partial<Audience>) {
+    setAudiences(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a))
   }
 
-  function commitSubreddit() {
-    const sub = newSubreddit.trim().replace(/^r\//, '')
-    if (sub && !subreddits.includes(sub)) setSubreddits(prev => [...prev, sub])
-    setNewSubreddit('')
-    setAddingSubreddit(false)
+  function removeAudienceSub(audienceId: string, sub: string) {
+    setAudiences(prev => prev.map(a =>
+      a.id === audienceId ? { ...a, subreddits: a.subreddits.filter(s => s !== sub) } : a
+    ))
+  }
+
+  function commitSubForAudience() {
+    if (!addingSubForId) return
+    const sub = newSubInput.trim().replace(/^r\//i, '')
+    if (sub) {
+      setAudiences(prev => prev.map(a => {
+        if (a.id !== addingSubForId) return a
+        if (a.subreddits.includes(sub)) return a
+        return { ...a, subreddits: [...a.subreddits, sub] }
+      }))
+    }
+    setNewSubInput('')
+    setAddingSubForId(null)
+  }
+
+  function addAudience() {
+    if (audiences.length >= MAX_AUDIENCES) return
+    setAudiences(prev => [
+      ...prev,
+      { id: 'custom-' + Date.now(), name: '', description: '', goal: '', subreddits: [] },
+    ])
   }
 
   return (
@@ -205,25 +224,9 @@ export default function OnboardingPage() {
               >
                 {scanning ? (
                   <>
-                    <svg
-                      className="animate-spin h-4 w-4 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                      />
+                    <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
                     Scanning...
                   </>
@@ -248,9 +251,7 @@ export default function OnboardingPage() {
             <div className="space-y-6">
               {/* Business name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Business name
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Business name</label>
                 <input
                   type="text"
                   value={businessName}
@@ -261,9 +262,7 @@ export default function OnboardingPage() {
 
               {/* Positioning */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Positioning
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Positioning</label>
                 <textarea
                   rows={3}
                   value={positioning}
@@ -273,99 +272,7 @@ export default function OnboardingPage() {
                 />
               </div>
 
-              {/* Keywords */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Keywords</label>
-                <div className="flex flex-wrap gap-2">
-                  {keywords.map(kw => (
-                    <span
-                      key={kw}
-                      className="bg-gray-50 border border-gray-200 rounded-full px-3 py-1.5 text-sm flex items-center gap-1.5"
-                    >
-                      {kw}
-                      <button
-                        type="button"
-                        onClick={() => setKeywords(prev => prev.filter(k => k !== kw))}
-                        className="text-gray-400 hover:text-gray-600 text-xs ml-1 leading-none"
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                  {addingKeyword ? (
-                    <input
-                      ref={newKeywordRef}
-                      type="text"
-                      value={newKeyword}
-                      onChange={e => setNewKeyword(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') { e.preventDefault(); commitKeyword() }
-                        if (e.key === 'Escape') { setAddingKeyword(false); setNewKeyword('') }
-                      }}
-                      onBlur={commitKeyword}
-                      placeholder="Add keyword"
-                      className="bg-gray-50 border border-dashed border-[#4B6BF5] rounded-full px-3 py-1.5 text-sm text-[#4B6BF5] focus:outline-none w-32"
-                    />
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setAddingKeyword(true)}
-                      className="bg-gray-50 border border-dashed border-gray-300 rounded-full px-3 py-1.5 text-sm text-[#4B6BF5] hover:border-[#4B6BF5] transition"
-                    >
-                      + Add
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Target communities */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Target communities
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {subreddits.map(sub => (
-                    <span
-                      key={sub}
-                      className="bg-gray-50 border border-gray-200 rounded-full px-3 py-1.5 text-sm flex items-center gap-1.5"
-                    >
-                      r/{sub}
-                      <button
-                        type="button"
-                        onClick={() => setSubreddits(prev => prev.filter(s => s !== sub))}
-                        className="text-gray-400 hover:text-gray-600 text-xs ml-1 leading-none"
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                  {addingSubreddit ? (
-                    <input
-                      ref={newSubredditRef}
-                      type="text"
-                      value={newSubreddit}
-                      onChange={e => setNewSubreddit(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') { e.preventDefault(); commitSubreddit() }
-                        if (e.key === 'Escape') { setAddingSubreddit(false); setNewSubreddit('') }
-                      }}
-                      onBlur={commitSubreddit}
-                      placeholder="subreddit name"
-                      className="bg-gray-50 border border-dashed border-[#4B6BF5] rounded-full px-3 py-1.5 text-sm text-[#4B6BF5] focus:outline-none w-36"
-                    />
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setAddingSubreddit(true)}
-                      className="bg-gray-50 border border-dashed border-gray-300 rounded-full px-3 py-1.5 text-sm text-[#4B6BF5] hover:border-[#4B6BF5] transition"
-                    >
-                      + Add
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Tone — 2×2 grid */}
+              {/* Tone */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Tone</label>
                 <div className="grid grid-cols-2 gap-3">
@@ -391,6 +298,137 @@ export default function OnboardingPage() {
                 </div>
               </div>
 
+              {/* Audiences */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Your audiences
+                </label>
+                <p className="text-xs text-gray-400 mb-3">
+                  Claude detected these from your website. Edit or remove as needed.
+                </p>
+
+                <div className="space-y-3">
+                  {audiences.map(audience => (
+                    <div
+                      key={audience.id}
+                      className="bg-white rounded-2xl border border-gray-100 p-4"
+                    >
+                      {/* Top row: gradient name pill + remove button */}
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] text-white">
+                          {audience.name || 'Unnamed audience'}
+                        </span>
+                        {audiences.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => setAudiences(prev => prev.filter(a => a.id !== audience.id))}
+                            className="text-gray-400 hover:text-gray-600 text-lg leading-none transition"
+                            aria-label="Remove audience"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="space-y-3">
+                        {/* Name */}
+                        <div>
+                          <p className="text-xs text-gray-400 mb-1">Audience name</p>
+                          <input
+                            type="text"
+                            value={audience.name}
+                            onChange={e => updateAudience(audience.id, { name: e.target.value })}
+                            className="w-full border-b border-gray-200 pb-1 text-sm text-gray-800 focus:outline-none focus:border-[#4B6BF5] bg-transparent"
+                            placeholder="e.g. Early-stage founders"
+                          />
+                        </div>
+
+                        {/* Description */}
+                        <div>
+                          <p className="text-xs text-gray-400 mb-1">Who they are</p>
+                          <textarea
+                            rows={2}
+                            value={audience.description}
+                            onChange={e => updateAudience(audience.id, { description: e.target.value })}
+                            className="w-full border-b border-gray-200 pb-1 text-sm text-gray-800 focus:outline-none focus:border-[#4B6BF5] bg-transparent resize-none"
+                            placeholder="e.g. Founders building their first product, focused on growth..."
+                          />
+                        </div>
+
+                        {/* Goal */}
+                        <div>
+                          <p className="text-xs text-gray-400 mb-1">What you want them to do</p>
+                          <input
+                            type="text"
+                            value={audience.goal}
+                            onChange={e => updateAudience(audience.id, { goal: e.target.value })}
+                            className="w-full border-b border-gray-200 pb-1 text-sm text-gray-800 focus:outline-none focus:border-[#4B6BF5] bg-transparent"
+                            placeholder="e.g. Sign up for a free trial"
+                          />
+                        </div>
+
+                        {/* Subreddits */}
+                        <div>
+                          <p className="text-xs text-gray-400 mb-2">Their communities</p>
+                          <div className="flex flex-wrap gap-2">
+                            {audience.subreddits.map(sub => (
+                              <span
+                                key={sub}
+                                className="bg-gray-50 border border-gray-200 rounded-full px-3 py-1 text-sm flex items-center gap-1.5"
+                              >
+                                r/{sub}
+                                <button
+                                  type="button"
+                                  onClick={() => removeAudienceSub(audience.id, sub)}
+                                  className="text-gray-400 hover:text-gray-600 text-xs leading-none"
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+
+                            {addingSubForId === audience.id ? (
+                              <input
+                                ref={newSubRef}
+                                type="text"
+                                value={newSubInput}
+                                onChange={e => setNewSubInput(e.target.value)}
+                                onKeyDown={e => {
+                                  if (e.key === 'Enter') { e.preventDefault(); commitSubForAudience() }
+                                  if (e.key === 'Escape') { setAddingSubForId(null); setNewSubInput('') }
+                                }}
+                                onBlur={commitSubForAudience}
+                                placeholder="subreddit name"
+                                className="bg-gray-50 border border-dashed border-[#4B6BF5] rounded-full px-3 py-1 text-sm text-[#4B6BF5] focus:outline-none w-36"
+                              />
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setAddingSubForId(audience.id)}
+                                className="bg-gray-50 border border-dashed border-gray-300 rounded-full px-3 py-1 text-sm text-[#4B6BF5] hover:border-[#4B6BF5] transition"
+                              >
+                                + Add
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Add audience button */}
+                {audiences.length < MAX_AUDIENCES && (
+                  <button
+                    type="button"
+                    onClick={addAudience}
+                    className="mt-3 w-full border border-dashed border-gray-300 rounded-xl py-3 text-sm text-[#4B6BF5] hover:border-[#4B6BF5] transition"
+                  >
+                    + Add audience
+                  </button>
+                )}
+              </div>
+
               {saveError && <p className="text-sm text-red-500">{saveError}</p>}
 
               <button
@@ -409,13 +447,7 @@ export default function OnboardingPage() {
         {step === 3 && (
           <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#4B6BF5] to-[#7B4BF5] flex items-center justify-center mb-6 shadow-lg">
-              <svg
-                className="w-10 h-10 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2.5}
-              >
+              <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             </div>

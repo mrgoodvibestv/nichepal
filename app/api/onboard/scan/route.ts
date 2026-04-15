@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
 
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 1000,
+      max_tokens: 2000,
       system:
         'You analyze business websites to build Reddit community engagement profiles. Return ONLY valid JSON. No markdown, no explanation, no code blocks.',
       messages: [
@@ -49,9 +49,24 @@ export async function POST(req: NextRequest) {
   "business_name": string,
   "positioning": string (2-3 sentences: what they do and who they serve),
   "keywords": string[] (exactly 12 Reddit search terms their audience uses — mix direct product terms and adjacent community terms),
-  "target_subreddits": string[] (exactly 10 subreddits without r/ prefix where their target audience is most active),
-  "tone": string (one of exactly: "expert", "peer-to-peer", "challenger", "storyteller" — pick the best fit for this business)
+  "tone": string (one of exactly: "expert", "peer-to-peer", "challenger", "storyteller" — pick the best fit),
+  "audiences": [
+    {
+      "id": string (kebab-case slug, e.g. "early-stage-founders"),
+      "name": string (2-3 words, e.g. "Early-stage founders"),
+      "description": string (1-2 sentences: who they are and what they care about),
+      "goal": string (1 sentence: what the business wants them to do),
+      "subreddits": string[] (4-6 subreddits without r/ prefix most relevant to THIS audience)
+    }
+  ]
 }
+
+Rules for audiences:
+- Return 2 audiences minimum, 4 maximum
+- Only return 3 or 4 if they are genuinely distinct and clearly evidenced by the website
+- Each audience must have meaningfully different subreddits
+- The subreddits for each audience should be where THAT specific audience hangs out
+- Do NOT include a top-level target_subreddits field — subreddits live inside each audience
 
 Website content:
 ${content}`,
@@ -60,7 +75,6 @@ ${content}`,
     })
 
     const raw = message.content[0].type === 'text' ? message.content[0].text : ''
-    // Strip any accidental markdown fences
     const cleaned = raw.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim()
     const data = JSON.parse(cleaned)
 

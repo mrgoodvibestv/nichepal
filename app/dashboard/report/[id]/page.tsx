@@ -51,7 +51,7 @@ export default async function ReportPage({ params }: { params: { id: string } })
   // Fetch report — RLS + explicit profile_id check
   const { data: report } = await supabase
     .from('reports')
-    .select('id, status, week_of, strategy_note, subreddits_scanned, threads_found, high_priority_count')
+    .select('id, status, week_of, strategy_note, subreddits_scanned, threads_found, high_priority_count, audience_name')
     .eq('id', params.id)
     .eq('profile_id', profile.id)
     .single()
@@ -85,6 +85,11 @@ export default async function ReportPage({ params }: { params: { id: string } })
             <h1 className="text-2xl font-bold text-black mb-1">
               Week of {formatWeekOf(report.week_of)}
             </h1>
+            {report.audience_name && (
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] bg-clip-text text-transparent mb-2">
+                👥 {report.audience_name}
+              </span>
+            )}
             {report.strategy_note && (
               <p className="text-sm text-gray-600 italic max-w-2xl">{report.strategy_note}</p>
             )}

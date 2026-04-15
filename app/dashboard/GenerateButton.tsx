@@ -2,9 +2,19 @@
 
 import { useState, useEffect } from 'react'
 
+interface Audience {
+  id: string
+  name: string
+  description: string
+  goal: string
+  subreddits: string[]
+}
+
 const MAX_SELECTED = 5
 
 export default function GenerateButton() {
+  const [audiences, setAudiences] = useState<Audience[]>([])
+  const [selectedAudienceId, setSelectedAudienceId] = useState<string>('')
   const [subreddits, setSubreddits] = useState<string[]>([])
   const [selected, setSelected] = useState<string[]>([])
   const [customInput, setCustomInput] = useState('')
@@ -13,17 +23,37 @@ export default function GenerateButton() {
   const [error, setError] = useState('')
   const [maxError, setMaxError] = useState(false)
 
-  // Fetch profile subreddits once
+  // Fetch profile once
   useEffect(() => {
     fetch('/api/profile')
       .then(r => r.json())
-      .then((profile: { target_subreddits?: string[] }) => {
-        const subs = profile.target_subreddits ?? []
-        setSubreddits(subs)
-        setSelected(subs.slice(0, 3))
+      .then((profile: { audiences?: Audience[]; target_subreddits?: string[] }) => {
+        const aud: Audience[] = profile.audiences ?? []
+        if (aud.length > 0) {
+          setAudiences(aud)
+          setSelectedAudienceId(aud[0].id)
+          const subs = aud[0].subreddits ?? []
+          setSubreddits(subs)
+          setSelected(subs.slice(0, 3))
+        } else {
+          // Legacy: no audiences, fall back to flat target_subreddits
+          const subs = profile.target_subreddits ?? []
+          setSubreddits(subs)
+          setSelected(subs.slice(0, 3))
+        }
       })
       .catch(() => {})
   }, [])
+
+  function selectAudience(id: string) {
+    const aud = audiences.find(a => a.id === id)
+    if (!aud) return
+    setSelectedAudienceId(id)
+    const subs = aud.subreddits ?? []
+    setSubreddits(subs)
+    setSelected(subs.slice(0, 3))
+    setMaxError(false)
+  }
 
   function openModal() {
     setError('')
@@ -57,12 +87,8 @@ export default function GenerateButton() {
       setMaxError(true)
       return
     }
-    if (!subreddits.includes(sub)) {
-      setSubreddits(prev => [...prev, sub])
-    }
-    if (!selected.includes(sub)) {
-      setSelected(prev => [...prev, sub])
-    }
+    if (!subreddits.includes(sub)) setSubreddits(prev => [...prev, sub])
+    if (!selected.includes(sub)) setSelected(prev => [...prev, sub])
     setCustomInput('')
     setMaxError(false)
   }
@@ -71,17 +97,28 @@ export default function GenerateButton() {
     if (selected.length === 0) return
     setError('')
     setLoading(true)
+
+    const activeAudience = audiences.find(a => a.id === selectedAudienceId)
+
     try {
       const res = await fetch('/api/reports/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ selectedSubreddits: selected }),
+        body: JSON.stringify({
+          selectedSubreddits: selected,
+          audienceId: activeAudience?.id ?? null,
+          audienceName: activeAudience?.name ?? null,
+          audienceDescription: activeAudience?.description ?? null,
+          audienceGoal: activeAudience?.goal ?? null,
+        }),
       })
       const data: { reportId?: string; error?: string } = await res.json()
       if (!res.ok) {
-        setError(data.error === 'No credits remaining'
-          ? 'No credits remaining'
-          : data.error || 'Generation failed. Please try again.')
+        setError(
+          data.error === 'No credits remaining'
+            ? 'No credits remaining'
+            : data.error || 'Generation failed. Please try again.'
+        )
         setLoading(false)
         return
       }
@@ -104,15 +141,42 @@ export default function GenerateButton() {
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 px-4">
-          <div className="bg-white rounded-2xl shadow-lg w-full max-w-md p-6">
-            {/* Header */}
-            <h2 className="text-lg font-semibold text-black mb-1">Choose communities to scan</h2>
-            <p className="text-sm text-gray-500 mb-4">Select 3–5 communities for this report</p>
+          <div className="bg-white rounded-2xl shadow-lg w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
 
-            {/* Subreddit list */}
+            {/* Audience selector — shown only when audiences exist */}
+            {audiences.length > 0 && (
+              <div className="mb-5">
+                <p className="text-sm font-medium text-gray-700 mb-2">Who are you targeting?</p>
+                <div className="space-y-2">
+                  {audiences.map(aud => (
+                    <button
+                      key={aud.id}
+                      type="button"
+                      onClick={() => selectAudience(aud.id)}
+                      className={`w-full text-left border rounded-xl px-4 py-3 cursor-pointer transition ${
+                        selectedAudienceId === aud.id
+                          ? 'border-[#4B6BF5] bg-blue-50/30'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <p className="font-medium text-sm text-black">{aud.name}</p>
+                      {aud.goal && (
+                        <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{aud.goal}</p>
+                      )}
+                    </button>
+                  ))}
+                </div>
+                <div className="border-b border-gray-100 mt-5 mb-5" />
+              </div>
+            )}
+
+            {/* Community selector */}
+            <h2 className="text-base font-semibold text-black mb-1">Choose communities to scan</h2>
+            <p className="text-sm text-gray-500 mb-4">Select up to 5 communities for this report</p>
+
             <div className="border border-gray-100 rounded-xl overflow-hidden mb-4">
               {subreddits.length === 0 ? (
-                <p className="text-sm text-gray-400 px-4 py-6 text-center">No communities in your profile yet.</p>
+                <p className="text-sm text-gray-400 px-4 py-6 text-center">No communities found.</p>
               ) : (
                 subreddits.map((sub, i) => (
                   <label
@@ -133,15 +197,11 @@ export default function GenerateButton() {
               )}
             </div>
 
-            {/* Selection counter + max warning */}
             <div className="flex items-center justify-between mb-4">
               <p className="text-xs text-gray-400">{selected.length} of {MAX_SELECTED} selected</p>
-              {maxError && (
-                <p className="text-xs text-red-500">Maximum 5 communities per report</p>
-              )}
+              {maxError && <p className="text-xs text-red-500">Maximum 5 communities per report</p>}
             </div>
 
-            {/* Add custom community */}
             <div className="flex gap-2 mb-5">
               <input
                 type="text"
@@ -159,12 +219,10 @@ export default function GenerateButton() {
               </button>
             </div>
 
-            {/* Estimated time */}
             <p className="text-xs text-gray-400 mb-5 text-center">Estimated time: ~30 seconds</p>
 
             {error && <p className="text-sm text-red-500 mb-3 text-center">{error}</p>}
 
-            {/* Actions */}
             <div className="flex gap-3">
               <button
                 onClick={closeModal}

@@ -14,8 +14,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { url, business_name, positioning, keywords, target_subreddits, tone, package: pkg } =
-      await req.json()
+    const {
+      url,
+      business_name,
+      positioning,
+      keywords,
+      tone,
+      audiences,
+      package: pkg,
+    } = await req.json()
+
+    // Derive target_subreddits from audiences (flat union — backwards compat)
+    const target_subreddits = (audiences ?? []).flatMap(
+      (a: { subreddits: string[] }) => a.subreddits ?? []
+    )
 
     const { error } = await supabase.from('profiles').upsert(
       {
@@ -26,6 +38,7 @@ export async function POST(req: NextRequest) {
         keywords,
         target_subreddits,
         tone,
+        audiences: audiences ?? [],
         ...(pkg !== undefined && { package: pkg }),
         onboarded: true,
       },

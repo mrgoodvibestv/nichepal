@@ -37,7 +37,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     const { data: reportCheck, error: checkError } = await supabase
       .from('reports')
-      .select('id, status, apify_dataset_id, profile_id, selected_subreddits')
+      .select('id, status, apify_dataset_id, profile_id, selected_subreddits, audience_id, audience_name, audience_description, audience_goal')
       .eq('id', params.id)
       .single()
 
@@ -120,6 +120,19 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const selectedSubs = (reportCheck.selected_subreddits as string[] | null) ?? []
     const maxThreads = (profile.package as string) === 'growth' ? 15 : 9
 
+    // Build audience context block if this report has a targeted audience
+    const audienceName = (reportCheck.audience_name as string | null) ?? ''
+    const audienceContext = audienceName
+      ? `\nTarget Audience: ${audienceName}\nWho they are: ${reportCheck.audience_description ?? ''}\nGoal: ${reportCheck.audience_goal ?? ''}\n`
+      : ''
+
+    const targetDescription = audienceName || 'their target audience'
+    const engagementGoal = (reportCheck.audience_goal as string | null) ?? 'grow awareness and engagement'
+
+    const strategyNoteInstruction = audienceName
+      ? `"strategy_note": "2-3 sentences on how to engage ${audienceName} this week on Reddit to achieve: ${engagementGoal}"`
+      : `"strategy_note": "2-3 sentence weekly Reddit strategy specific to this business"`
+
     // ── 7. Claude analysis ──
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
@@ -131,17 +144,22 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
           content: `Business: ${profile.business_name ?? ''}
 Positioning: ${profile.positioning ?? ''}
 Keywords: ${(profile.keywords as string[] | null ?? []).join(', ')}
+${audienceContext}
+You are scanning Reddit for threads where this business can reach ${targetDescription}.
 
-Find Reddit threads where this specific business can add genuine value. Be STRICT — only include threads that are directly relevant to this business's niche, product, or audience.
+Find threads where engaging authentically would help this business achieve its goal: ${engagementGoal}.
+
+Be STRICT — only include threads directly relevant to this specific audience's interests and the business's goal with them.
 
 Reject threads that are:
-- Only tangentially related to the keywords
+- Not relevant to the target audience's worldview or concerns
 - About completely different industries or products
-- Too generic (broad marketing/business advice with no specific connection)
+- Too generic with no specific connection to this audience
+- Only tangentially related to the keywords
 
 Return a JSON object:
 {
-  "strategy_note": "2-3 sentence weekly Reddit strategy specific to this business",
+  ${strategyNoteInstruction},
   "threads": [
     {
       "subreddit": string,
@@ -155,7 +173,7 @@ Return a JSON object:
       "thread_type": "trending" | "rising" | "evergreen",
       "priority": "high" | "medium",
       "relevance_score": number (1-10),
-      "why_engage": string (one sentence — specific to this business),
+      "why_engage": string (one sentence — specific to this business and audience),
       "comment_template": string (2-3 sentences adding genuine value, no promotion),
       "body_snippet": string (first 150 chars of post body, or empty string)
     }

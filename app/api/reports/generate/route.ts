@@ -17,8 +17,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { selectedSubreddits } = await req.json().catch(() => ({})) as {
+    const {
+      selectedSubreddits,
+      audienceId,
+      audienceName,
+      audienceDescription,
+      audienceGoal,
+    } = await req.json().catch(() => ({})) as {
       selectedSubreddits?: string[]
+      audienceId?: string
+      audienceName?: string
+      audienceDescription?: string
+      audienceGoal?: string
     }
 
     const { data: profile } = await supabase
@@ -91,13 +101,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No Apify run ID returned' }, { status: 500 })
     }
 
-    // Save run IDs + selected subreddits so analyze route can read them
+    // Save run IDs, selected subreddits + audience context for analyze route
     await db
       .from('reports')
       .update({
         apify_run_id: runId,
         apify_dataset_id: datasetId,
         selected_subreddits: subsToScan,
+        audience_id: audienceId ?? null,
+        audience_name: audienceName ?? null,
+        audience_description: audienceDescription ?? null,
+        audience_goal: audienceGoal ?? null,
       })
       .eq('id', report.id)
 

@@ -14,6 +14,7 @@ type Report = {
   threads_found: number
   high_priority_count: number
   generated_at: string
+  audience_name: string | null
 }
 
 function formatWeekOf(dateStr: string): string {
@@ -151,9 +152,14 @@ export default function DashboardClient({
                   className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6"
                 >
                   <div className="flex items-start justify-between mb-3">
-                    <h3 className="font-semibold text-lg text-black">
-                      Week of {formatWeekOf(report.week_of)}
-                    </h3>
+                    <div>
+                      <h3 className="font-semibold text-lg text-black">
+                        Week of {formatWeekOf(report.week_of)}
+                      </h3>
+                      {report.audience_name && (
+                        <span className="text-xs text-[#4B6BF5]">👥 {report.audience_name}</span>
+                      )}
+                    </div>
                     <StatusBadge status={report.status} />
                   </div>
 

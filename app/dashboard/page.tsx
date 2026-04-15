@@ -11,6 +11,7 @@ type Report = {
   threads_found: number
   high_priority_count: number
   generated_at: string
+  audience_name: string | null
 }
 
 export default async function DashboardPage() {
@@ -29,7 +30,7 @@ export default async function DashboardPage() {
 
   const { data: reports } = await supabase
     .from('reports')
-    .select('id, status, week_of, strategy_note, subreddits_scanned, threads_found, high_priority_count, generated_at')
+    .select('id, status, week_of, strategy_note, subreddits_scanned, threads_found, high_priority_count, generated_at, audience_name')
     .eq('profile_id', profile?.id)
     .order('generated_at', { ascending: false })
 
