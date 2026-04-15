@@ -72,7 +72,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     // ── 5. Fetch Apify dataset ──
     const datasetRes = await fetch(
-      `https://api.apify.com/v2/datasets/${datasetId}/items?token=${token}&limit=50`
+      `https://api.apify.com/v2/datasets/${datasetId}/items?token=${token}&limit=100`
     )
     const allItems: unknown[] = await datasetRes.json()
     const scrapedPosts = Array.isArray(allItems)
@@ -116,24 +116,15 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     })
     const postsToAnalyze = freshPosts.length > 0 ? freshPosts : scrapedPosts
 
-    // subreddits_scanned = how many were selected for this run
-    const selectedSubs = (reportCheck.selected_subreddits as string[] | null) ?? []
-    const subredditsScanned = selectedSubs.length > 0
-      ? selectedSubs.length
-      : new Set(
-          scrapedPosts
-            .map((p: unknown) => (p as Record<string, unknown>).subreddit as string)
-            .filter(Boolean)
-        ).size
-
     // Tier-based thread cap: growth users get more output from Claude
+    const selectedSubs = (reportCheck.selected_subreddits as string[] | null) ?? []
     const maxThreads = (profile.package as string) === 'growth' ? 15 : 9
 
     // ── 7. Claude analysis ──
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 4000,
-      system: 'You are a Reddit intelligence analyst. Return ONLY valid JSON, no markdown, no code blocks.',
+      system: 'You are a Reddit intelligence analyst specializing in finding threads where this specific business can add genuine value. Be STRICT — only include threads that are directly relevant to this business\'s niche, product, or audience. Return ONLY valid JSON, no markdown, no code blocks.',
       messages: [
         {
           role: 'user',
@@ -141,9 +132,16 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 Positioning: ${profile.positioning ?? ''}
 Keywords: ${(profile.keywords as string[] | null ?? []).join(', ')}
 
-Analyze these Reddit posts for relevance to this business. Return a JSON object:
+Find Reddit threads where this specific business can add genuine value. Be STRICT — only include threads that are directly relevant to this business's niche, product, or audience.
+
+Reject threads that are:
+- Only tangentially related to the keywords
+- About completely different industries or products
+- Too generic (broad marketing/business advice with no specific connection)
+
+Return a JSON object:
 {
-  "strategy_note": "2-3 sentence weekly Reddit strategy for this business",
+  "strategy_note": "2-3 sentence weekly Reddit strategy specific to this business",
   "threads": [
     {
       "subreddit": string,
@@ -157,22 +155,23 @@ Analyze these Reddit posts for relevance to this business. Return a JSON object:
       "thread_type": "trending" | "rising" | "evergreen",
       "priority": "high" | "medium",
       "relevance_score": number (1-10),
-      "why_engage": string (one sentence),
-      "comment_template": string (2-3 authentic sentences adding genuine value),
-      "body_snippet": string (first 150 chars of post body, empty string if no body)
+      "why_engage": string (one sentence — specific to this business),
+      "comment_template": string (2-3 sentences adding genuine value, no promotion),
+      "body_snippet": string (first 150 chars of post body, or empty string)
     }
   ]
 }
 
 Rules:
-- Only include threads with relevance_score >= 5
+- ONLY include threads with relevance_score >= 6
 - Max ${maxThreads} threads, sorted by priority (high first) then relevance_score desc
-- thread_type: trending = posted <48hrs and >50 upvotes, rising = gaining traction, evergreen = always relevant topic
+- thread_type: trending = posted <48hrs and >50 upvotes, rising = gaining traction, evergreen = always relevant
 - priority high = engage within 24 hours, medium = engage this week
-- comment_template must be authentic and non-promotional — add genuine value to the conversation
+- If fewer than 3 threads meet the relevance bar, include the best ones anyway
+- comment_template must sound like a knowledgeable community member, not a brand
 
 Posts to analyze:
-${JSON.stringify(postsToAnalyze.slice(0, 25))}`,
+${JSON.stringify(postsToAnalyze.slice(0, 40))}`,
         },
       ],
     })
@@ -184,6 +183,13 @@ ${JSON.stringify(postsToAnalyze.slice(0, 25))}`,
 
     const threads = parsed.threads ?? []
     const highPriorityCount = threads.filter(t => t.priority === 'high').length
+
+    // Count unique subreddits represented in the returned threads
+    // (matches what the user sees in the filter dropdown)
+    const uniqueSubredditsInThreads = new Set(threads.map(t => t.subreddit)).size
+    const subredditsScanned = uniqueSubredditsInThreads > 0
+      ? uniqueSubredditsInThreads
+      : selectedSubs.length
 
     // ── 9. Update report + insert threads ──
     await db

@@ -40,8 +40,8 @@ export async function POST(req: NextRequest) {
         ? selectedSubreddits.slice(0, MAX_SELECTED)
         : (profile.target_subreddits as string[] | null ?? []).slice(0, 5)
 
-    const maxPostCount = 8
-    const maxItems = subsToScan.length * 8 + 10
+    const maxPostCount = 15
+    const maxItems = subsToScan.length * 15 + 20
 
     // Create report row
     const db = createServiceClient()
