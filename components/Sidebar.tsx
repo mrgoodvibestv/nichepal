@@ -10,6 +10,51 @@ interface SidebarProps {
   onClose?: () => void
 }
 
+function ReportsIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="20" x2="18" y2="10"/>
+      <line x1="12" y1="20" x2="12" y2="4"/>
+      <line x1="6" y1="20" x2="6" y2="14"/>
+    </svg>
+  )
+}
+
+function SearchIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8"/>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+  )
+}
+
+function SettingsIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="4" y1="21" x2="4" y2="14"/>
+      <line x1="4" y1="10" x2="4" y2="3"/>
+      <line x1="12" y1="21" x2="12" y2="12"/>
+      <line x1="12" y1="8" x2="12" y2="3"/>
+      <line x1="20" y1="21" x2="20" y2="16"/>
+      <line x1="20" y1="12" x2="20" y2="3"/>
+      <line x1="1" y1="14" x2="7" y2="14"/>
+      <line x1="9" y1="8" x2="15" y2="8"/>
+      <line x1="17" y1="16" x2="23" y2="16"/>
+    </svg>
+  )
+}
+
+function SignOutIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+      <polyline points="16 17 21 12 16 7"/>
+      <line x1="21" y1="12" x2="9" y2="12"/>
+    </svg>
+  )
+}
+
 function NavItem({
   href,
   icon,
@@ -18,7 +63,7 @@ function NavItem({
   onClick,
 }: {
   href: string
-  icon: string
+  icon: React.ReactNode
   label: string
   isActive: boolean
   onClick?: () => void
@@ -29,11 +74,11 @@ function NavItem({
       onClick={onClick}
       className={
         isActive
-          ? 'bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] rounded-xl text-white px-3 py-2.5 mx-2 flex items-center gap-2 text-sm font-medium'
-          : 'text-gray-500 hover:text-black hover:bg-gray-50 rounded-xl px-3 py-2.5 mx-2 flex items-center gap-2 text-sm transition-colors'
+          ? 'bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] rounded-xl text-white px-4 py-2.5 mx-3 flex items-center gap-3 text-sm font-medium'
+          : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-xl px-4 py-2.5 mx-3 flex items-center gap-3 text-sm transition-colors cursor-pointer'
       }
     >
-      <span className={isActive ? '' : 'opacity-60'}>{icon}</span>
+      {icon}
       {label}
     </Link>
   )
@@ -62,17 +107,15 @@ export default function Sidebar({ credits, isOpen = false, onClose }: SidebarPro
       {/* Sidebar panel */}
       <div
         className={[
-          // layout
           'fixed lg:relative top-0 left-0 h-full lg:h-screen z-50 lg:z-auto',
           'w-64 bg-white border-r border-gray-100 flex flex-col shrink-0',
-          // mobile slide animation
           'transition-transform duration-200',
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
         ].join(' ')}
       >
         {/* Logo row */}
-        <div className="px-5 py-5 flex items-center justify-between">
-          <span className="text-lg font-bold">
+        <div className="px-6 py-6 flex items-center justify-between">
+          <span className="text-2xl font-bold tracking-tight">
             <span className="text-black">Niche</span>
             <span className="bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] bg-clip-text text-transparent">
               Pal
@@ -89,53 +132,52 @@ export default function Sidebar({ credits, isOpen = false, onClose }: SidebarPro
             </svg>
           </button>
         </div>
-        {/* Gradient accent line */}
-        <div className="h-px bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5]" />
 
         {/* Nav */}
-        <nav className="flex-1 py-4 space-y-0.5 overflow-y-auto">
-          <p className="px-5 mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+        <nav className="flex-1 overflow-y-auto">
+          <p className="px-6 mb-1 mt-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400">
             Reddit
           </p>
           <NavItem
             href="/dashboard"
-            icon="📊"
+            icon={<ReportsIcon />}
             label="Reports"
             isActive={pathname === '/dashboard'}
             onClick={onClose}
           />
           <NavItem
             href="/dashboard/community"
-            icon="🔍"
+            icon={<SearchIcon />}
             label="Community Search"
             isActive={pathname === '/dashboard/community'}
             onClick={onClose}
           />
 
-          <p className="px-5 mt-5 mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+          <p className="px-6 mb-1 mt-6 text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400">
             Account
           </p>
           <NavItem
             href="/dashboard/settings"
-            icon="⚙️"
+            icon={<SettingsIcon />}
             label="Settings"
             isActive={pathname === '/dashboard/settings'}
             onClick={onClose}
           />
           <button
             onClick={handleSignOut}
-            className="text-gray-500 hover:text-black hover:bg-gray-50 rounded-xl px-3 py-2.5 mx-2 flex items-center gap-2 text-sm transition-colors w-[calc(100%-16px)]"
+            className="text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-xl px-4 py-2.5 mx-3 flex items-center gap-3 text-sm transition-colors cursor-pointer w-[calc(100%-24px)]"
           >
-            <span className="opacity-60">🚪</span>
+            <SignOutIcon />
             Sign Out
           </button>
         </nav>
 
-        {/* Credits badge */}
-        <div className="px-5 py-4 border-t border-gray-100">
-          <span className="inline-flex items-center text-sm text-[#4B6BF5] bg-[#4B6BF5]/8 rounded-full px-3 py-1 border border-[#4B6BF5]/20 max-w-[160px]">
-            <span className="truncate">{credits} credits remaining</span>
-          </span>
+        {/* Credits stat card */}
+        <div className="px-4 py-4 border-t border-gray-100">
+          <div className="px-3 py-2 rounded-xl bg-gradient-to-r from-[#4B6BF5]/8 to-[#7B4BF5]/8 border border-[#4B6BF5]/15">
+            <p className="text-xs text-gray-400 mb-0.5">Credits remaining</p>
+            <p className="text-sm font-semibold text-[#4B6BF5]">{credits}</p>
+          </div>
         </div>
       </div>
     </>

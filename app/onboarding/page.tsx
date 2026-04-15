@@ -170,7 +170,7 @@ export default function OnboardingPage() {
         ))}
       </div>
 
-      <div className="max-w-lg mx-auto px-4 sm:px-6 pb-20">
+      <div className={`${step === 2 ? 'max-w-5xl' : 'max-w-lg'} mx-auto px-4 sm:px-6 pb-20`}>
         {/* Logo */}
         <div className="text-center mb-8 mt-2">
           <span className="text-xl font-bold">
@@ -248,58 +248,73 @@ export default function OnboardingPage() {
               </p>
             </div>
 
-            <div className="space-y-6">
-              {/* Business name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Business name</label>
-                <input
-                  type="text"
-                  value={businessName}
-                  onChange={e => setBusinessName(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4B6BF5] focus:border-transparent"
-                />
-              </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
 
-              {/* Positioning */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Positioning</label>
-                <textarea
-                  rows={3}
-                  value={positioning}
-                  onChange={e => setPositioning(e.target.value)}
-                  placeholder="What you do and who you serve"
-                  className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4B6BF5] focus:border-transparent resize-none max-h-24 overflow-y-auto"
-                />
-              </div>
-
-              {/* Tone */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Tone</label>
-                <div className="grid grid-cols-2 gap-3">
-                  {TONE_OPTIONS.map(t => (
-                    <button
-                      key={t.value}
-                      type="button"
-                      onClick={() => setTone(t.value)}
-                      className={`relative border-2 rounded-xl p-4 text-center cursor-pointer transition text-sm font-medium ${
-                        tone === t.value
-                          ? 'border-[#4B6BF5] bg-blue-50/30 text-[#4B6BF5]'
-                          : 'border-gray-200 text-gray-700 hover:border-gray-300'
-                      }`}
-                    >
-                      {tone === t.value && (
-                        <span className="absolute top-2 right-2 text-xs bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] bg-clip-text text-transparent font-bold">
-                          ✓
-                        </span>
-                      )}
-                      {t.label}
-                    </button>
-                  ))}
+              {/* Left column — profile fields + save button */}
+              <div className="space-y-6">
+                {/* Business name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Business name</label>
+                  <input
+                    type="text"
+                    value={businessName}
+                    onChange={e => setBusinessName(e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4B6BF5] focus:border-transparent"
+                  />
                 </div>
+
+                {/* Positioning */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Positioning</label>
+                  <textarea
+                    rows={3}
+                    value={positioning}
+                    onChange={e => setPositioning(e.target.value)}
+                    placeholder="What you do and who you serve"
+                    className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4B6BF5] focus:border-transparent resize-none max-h-24 overflow-y-auto"
+                  />
+                </div>
+
+                {/* Tone */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Tone</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {TONE_OPTIONS.map(t => (
+                      <button
+                        key={t.value}
+                        type="button"
+                        onClick={() => setTone(t.value)}
+                        className={`relative border-2 rounded-xl p-4 text-center cursor-pointer transition text-sm font-medium ${
+                          tone === t.value
+                            ? 'border-[#4B6BF5] bg-blue-50/30 text-[#4B6BF5]'
+                            : 'border-gray-200 text-gray-700 hover:border-gray-300'
+                        }`}
+                      >
+                        {tone === t.value && (
+                          <span className="absolute top-2 right-2 text-xs bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] bg-clip-text text-transparent font-bold">
+                            ✓
+                          </span>
+                        )}
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {saveError && <p className="text-sm text-red-500">{saveError}</p>}
+
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="w-full rounded-lg py-3 font-semibold text-white bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {saving ? 'Saving...' : "Looks good, let's go →"}
+                </button>
               </div>
 
-              {/* Audiences */}
-              <div>
+              {/* Right column — audiences */}
+              <div className="lg:max-h-[calc(100vh-200px)] lg:overflow-y-auto">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Your audiences
                 </label>
@@ -429,16 +444,6 @@ export default function OnboardingPage() {
                 )}
               </div>
 
-              {saveError && <p className="text-sm text-red-500">{saveError}</p>}
-
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={saving}
-                className="w-full rounded-lg py-3 font-semibold text-white bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {saving ? 'Saving...' : "Looks good, let's go →"}
-              </button>
             </div>
           </div>
         )}
