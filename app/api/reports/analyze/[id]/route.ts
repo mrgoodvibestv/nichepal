@@ -141,7 +141,7 @@ Positioning: ${profile.positioning ?? ''}
 Keywords: ${(profile.keywords as string[] | null ?? []).join(', ')}
 ${audienceContext}
 Your job is to find Reddit threads where someone from this business can show up as a knowledgeable, credible voice — NOT as a brand, but as a person with relevant expertise and perspective.
-${audienceName ? `\nThe goal with ${audienceName}: ${engagementGoal}` : ''}
+${audienceName ? '\nThe goal with ' + audienceName + ': ' + engagementGoal : ''}
 
 IMPORTANT — Think creatively about relevance:
 - Threads do NOT need to be about this business's product directly
@@ -157,7 +157,7 @@ Reject threads ONLY if:
 Return a JSON object:
 {
   "strategy_note": "${audienceName
-    ? `2-3 sentences on how to engage ${audienceName} this week — be specific about the indirect angle, what persona to adopt, and what topics to own`
+    ? '2-3 sentences on how to engage ' + audienceName + ' this week — be specific about the indirect angle, what persona to adopt, and what topics to own'
     : '2-3 sentences on Reddit strategy this week — be specific about topics, persona, and indirect angles'}",
   "threads": [{
     "subreddit": string,
