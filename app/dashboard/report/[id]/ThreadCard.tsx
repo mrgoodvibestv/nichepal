@@ -92,7 +92,7 @@ export default function ThreadCard({
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-md transition-shadow duration-200">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow p-6 hover:shadow-lg transition-shadow duration-200">
       {/* Top row */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 flex-wrap">

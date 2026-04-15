@@ -150,7 +150,7 @@ export default function DashboardClient({
               {reports.map(report => (
                 <div
                   key={report.id}
-                  className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-md transition-shadow duration-200"
+                  className="bg-white rounded-2xl border border-gray-100 shadow p-6 hover:shadow-lg transition-shadow duration-200"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div>
