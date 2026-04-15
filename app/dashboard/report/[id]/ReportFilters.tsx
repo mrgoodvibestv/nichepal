@@ -48,7 +48,7 @@ export default function ReportFilters({ threads }: { threads: Thread[] }) {
   return (
     <>
       {/* Filter bar */}
-      <div className="bg-white border-b border-gray-100 px-8 py-3 flex flex-wrap items-center gap-4">
+      <div className="bg-white border-b border-gray-100 px-4 sm:px-8 py-3 flex flex-wrap items-center gap-2 sm:gap-4">
         {/* Priority */}
         <div className="flex items-center gap-1.5">
           {PRIORITY_LABELS.map(p => (
@@ -95,7 +95,7 @@ export default function ReportFilters({ threads }: { threads: Thread[] }) {
       </div>
 
       {/* Thread list */}
-      <div className="px-8 py-6 space-y-4">
+      <div className="px-4 sm:px-8 py-6 space-y-4">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <p className="text-3xl mb-3">🔍</p>

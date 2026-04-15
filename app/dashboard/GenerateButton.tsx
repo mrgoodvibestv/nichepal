@@ -153,7 +153,7 @@ export default function GenerateButton() {
                       key={aud.id}
                       type="button"
                       onClick={() => selectAudience(aud.id)}
-                      className={`w-full text-left border rounded-xl px-4 py-3 cursor-pointer transition ${
+                      className={`w-full text-left border-2 rounded-xl px-4 py-3 cursor-pointer transition ${
                         selectedAudienceId === aud.id
                           ? 'border-[#4B6BF5] bg-blue-50/30'
                           : 'border-gray-200 hover:border-gray-300'
@@ -181,7 +181,7 @@ export default function GenerateButton() {
                 subreddits.map((sub, i) => (
                   <label
                     key={sub}
-                    className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-gray-50 transition ${
+                    className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition ${
                       i < subreddits.length - 1 ? 'border-b border-gray-50' : ''
                     }`}
                   >
@@ -191,7 +191,7 @@ export default function GenerateButton() {
                       onChange={() => toggleSubreddit(sub)}
                       className="accent-[#4B6BF5] w-4 h-4 shrink-0"
                     />
-                    <span className="text-sm text-gray-700">r/{sub}</span>
+                    <span className="text-sm text-gray-700 truncate">r/{sub}</span>
                   </label>
                 ))
               )}

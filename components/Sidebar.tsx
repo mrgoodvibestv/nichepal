@@ -29,11 +29,11 @@ function NavItem({
       onClick={onClick}
       className={
         isActive
-          ? 'bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] rounded-xl text-white px-3 py-2 mx-2 flex items-center gap-2 text-sm font-medium'
-          : 'text-gray-500 hover:text-black hover:bg-gray-50 rounded-xl px-3 py-2 mx-2 flex items-center gap-2 text-sm transition-colors'
+          ? 'bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] rounded-xl text-white px-3 py-2.5 mx-2 flex items-center gap-2 text-sm font-medium'
+          : 'text-gray-500 hover:text-black hover:bg-gray-50 rounded-xl px-3 py-2.5 mx-2 flex items-center gap-2 text-sm transition-colors'
       }
     >
-      <span>{icon}</span>
+      <span className={isActive ? '' : 'opacity-60'}>{icon}</span>
       {label}
     </Link>
   )
@@ -71,7 +71,7 @@ export default function Sidebar({ credits, isOpen = false, onClose }: SidebarPro
         ].join(' ')}
       >
         {/* Logo row */}
-        <div className="px-5 py-5 border-b border-gray-100 flex items-center justify-between">
+        <div className="px-5 py-5 flex items-center justify-between">
           <span className="text-lg font-bold">
             <span className="text-black">Niche</span>
             <span className="bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] bg-clip-text text-transparent">
@@ -89,6 +89,8 @@ export default function Sidebar({ credits, isOpen = false, onClose }: SidebarPro
             </svg>
           </button>
         </div>
+        {/* Gradient accent line */}
+        <div className="h-px bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5]" />
 
         {/* Nav */}
         <nav className="flex-1 py-4 space-y-0.5 overflow-y-auto">
@@ -122,17 +124,17 @@ export default function Sidebar({ credits, isOpen = false, onClose }: SidebarPro
           />
           <button
             onClick={handleSignOut}
-            className="text-gray-500 hover:text-black hover:bg-gray-50 rounded-xl px-3 py-2 mx-2 flex items-center gap-2 text-sm transition-colors w-[calc(100%-16px)]"
+            className="text-gray-500 hover:text-black hover:bg-gray-50 rounded-xl px-3 py-2.5 mx-2 flex items-center gap-2 text-sm transition-colors w-[calc(100%-16px)]"
           >
-            <span>🚪</span>
+            <span className="opacity-60">🚪</span>
             Sign Out
           </button>
         </nav>
 
         {/* Credits badge */}
         <div className="px-5 py-4 border-t border-gray-100">
-          <span className="text-sm text-[#4B6BF5] bg-[#4B6BF5]/8 rounded-full px-3 py-1 border border-[#4B6BF5]/20">
-            {credits} credits remaining
+          <span className="inline-flex items-center text-sm text-[#4B6BF5] bg-[#4B6BF5]/8 rounded-full px-3 py-1 border border-[#4B6BF5]/20 max-w-[160px]">
+            <span className="truncate">{credits} credits remaining</span>
           </span>
         </div>
       </div>

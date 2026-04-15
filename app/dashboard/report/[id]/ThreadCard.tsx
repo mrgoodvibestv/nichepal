@@ -92,7 +92,7 @@ export default function ThreadCard({
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-md transition-shadow duration-200">
       {/* Top row */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 flex-wrap">
@@ -111,13 +111,15 @@ export default function ThreadCard({
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-semibold text-black hover:text-[#4B6BF5] transition leading-snug"
+          className="font-semibold text-black hover:text-[#4B6BF5] transition leading-snug line-clamp-2"
         >
           {title}
         </Link>
-        <p className="text-xs text-gray-400 mt-1">
-          {author ? `by u/${author} · ` : ''}▲ {upvotes.toLocaleString()} ·{' '}
-          💬 {num_comments} comments · {Math.round(upvote_ratio * 100)}% upvoted
+        <p className="text-xs text-gray-400 mt-1 flex flex-wrap gap-x-2">
+          {author && <span className="truncate max-w-[160px]">by u/{author}</span>}
+          <span>▲ {upvotes.toLocaleString()}</span>
+          <span>💬 {num_comments} comments</span>
+          <span>{Math.round(upvote_ratio * 100)}% upvoted</span>
         </p>
       </div>
 
@@ -152,14 +154,14 @@ export default function ThreadCard({
               {copied ? 'Copied!' : 'Copy'}
             </button>
           </div>
-          <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-700 leading-relaxed border border-gray-200">
+          <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-700 leading-relaxed border border-gray-200 break-words">
             {comment_template}
           </div>
         </div>
       )}
 
       {/* Bottom row */}
-      <div className="mt-4 flex items-center justify-between">
+      <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <Link
           href={url}
           target="_blank"

@@ -170,7 +170,7 @@ export default function OnboardingPage() {
         ))}
       </div>
 
-      <div className="max-w-lg mx-auto px-6 pb-20">
+      <div className="max-w-lg mx-auto px-4 sm:px-6 pb-20">
         {/* Logo */}
         <div className="text-center mb-8 mt-2">
           <span className="text-xl font-bold">
@@ -268,7 +268,7 @@ export default function OnboardingPage() {
                   value={positioning}
                   onChange={e => setPositioning(e.target.value)}
                   placeholder="What you do and who you serve"
-                  className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4B6BF5] focus:border-transparent resize-none"
+                  className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4B6BF5] focus:border-transparent resize-none max-h-24 overflow-y-auto"
                 />
               </div>
 
@@ -281,7 +281,7 @@ export default function OnboardingPage() {
                       key={t.value}
                       type="button"
                       onClick={() => setTone(t.value)}
-                      className={`relative border rounded-xl p-4 text-center cursor-pointer transition text-sm font-medium ${
+                      className={`relative border-2 rounded-xl p-4 text-center cursor-pointer transition text-sm font-medium ${
                         tone === t.value
                           ? 'border-[#4B6BF5] bg-blue-50/30 text-[#4B6BF5]'
                           : 'border-gray-200 text-gray-700 hover:border-gray-300'
@@ -333,7 +333,7 @@ export default function OnboardingPage() {
                       <div className="space-y-3">
                         {/* Name */}
                         <div>
-                          <p className="text-xs text-gray-400 mb-1">Audience name</p>
+                          <p className="text-xs font-medium text-gray-400 mb-1">Audience name</p>
                           <input
                             type="text"
                             value={audience.name}
@@ -345,19 +345,19 @@ export default function OnboardingPage() {
 
                         {/* Description */}
                         <div>
-                          <p className="text-xs text-gray-400 mb-1">Who they are</p>
+                          <p className="text-xs font-medium text-gray-400 mb-1">Who they are</p>
                           <textarea
                             rows={2}
                             value={audience.description}
                             onChange={e => updateAudience(audience.id, { description: e.target.value })}
-                            className="w-full border-b border-gray-200 pb-1 text-sm text-gray-800 focus:outline-none focus:border-[#4B6BF5] bg-transparent resize-none"
+                            className="w-full border-b border-gray-200 pb-1 text-sm text-gray-800 focus:outline-none focus:border-[#4B6BF5] bg-transparent resize-none max-h-24 overflow-y-auto"
                             placeholder="e.g. Founders building their first product, focused on growth..."
                           />
                         </div>
 
                         {/* Goal */}
                         <div>
-                          <p className="text-xs text-gray-400 mb-1">What you want them to do</p>
+                          <p className="text-xs font-medium text-gray-400 mb-1">What you want them to do</p>
                           <input
                             type="text"
                             value={audience.goal}
@@ -369,7 +369,7 @@ export default function OnboardingPage() {
 
                         {/* Subreddits */}
                         <div>
-                          <p className="text-xs text-gray-400 mb-2">Their communities</p>
+                          <p className="text-xs font-medium text-gray-400 mb-2">Their communities</p>
                           <div className="flex flex-wrap gap-2">
                             {audience.subreddits.map(sub => (
                               <span

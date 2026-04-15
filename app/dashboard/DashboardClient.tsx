@@ -113,13 +113,14 @@ export default function DashboardClient({
   return (
     <div>
       {/* Stats bar */}
-      <div className="bg-white border-b border-gray-100 px-8 py-4 flex gap-8">
+      <div className="bg-white border-b border-gray-100 px-4 sm:px-8 py-4 flex gap-8">
         <div>
           <p className="text-xl font-bold bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] bg-clip-text text-transparent">
             {reports.length}
           </p>
           <p className="text-xs text-gray-400 mt-0.5">Total Reports</p>
         </div>
+        <div className="w-px bg-gray-100 self-stretch" />
         <div>
           <p className="text-xl font-bold bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] bg-clip-text text-transparent">
             {credits}
@@ -129,7 +130,7 @@ export default function DashboardClient({
       </div>
 
       {/* Report list */}
-      <div className="px-8 py-6">
+      <div className="px-4 sm:px-8 py-6">
         {reports.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <p className="text-5xl mb-4">📋</p>
@@ -140,8 +141,8 @@ export default function DashboardClient({
             <GenerateButton />
           </div>
         ) : (
-          <div>
-            <div className="flex items-center justify-between mb-6">
+          <div className="max-w-4xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
               <h2 className="text-lg font-semibold text-black">Your Reports</h2>
               <GenerateButton />
             </div>
@@ -149,7 +150,7 @@ export default function DashboardClient({
               {reports.map(report => (
                 <div
                   key={report.id}
-                  className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6"
+                  className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:shadow-md transition-shadow duration-200"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div>
@@ -157,7 +158,9 @@ export default function DashboardClient({
                         Week of {formatWeekOf(report.week_of)}
                       </h3>
                       {report.audience_name && (
-                        <span className="text-xs text-[#4B6BF5]">👥 {report.audience_name}</span>
+                        <span className="text-xs text-[#4B6BF5] inline-flex items-center gap-1 truncate max-w-[200px]">
+                          👥 {report.audience_name}
+                        </span>
                       )}
                     </div>
                     <StatusBadge status={report.status} />
@@ -169,10 +172,12 @@ export default function DashboardClient({
                   </p>
 
                   {report.strategy_note && (
-                    <p className="text-sm text-gray-600 line-clamp-2 mb-3">
-                      {report.strategy_note.slice(0, 120)}
-                      {report.strategy_note.length > 120 ? '...' : ''}
-                    </p>
+                    <div className="overflow-hidden mb-3">
+                      <p className="text-sm text-gray-600 line-clamp-2">
+                        {report.strategy_note.slice(0, 120)}
+                        {report.strategy_note.length > 120 ? '...' : ''}
+                      </p>
+                    </div>
                   )}
 
                   {report.status === 'complete' && (

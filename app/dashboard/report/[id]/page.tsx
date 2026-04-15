@@ -72,7 +72,7 @@ export default async function ReportPage({ params }: { params: { id: string } })
   return (
     <div>
       {/* Report header */}
-      <div className="bg-white border-b border-gray-100 px-8 py-6">
+      <div className="bg-white border-b border-gray-100 px-4 sm:px-8 py-6">
         <Link
           href="/dashboard"
           className="text-sm text-gray-500 hover:text-black transition mb-3 inline-block"
@@ -94,9 +94,10 @@ export default async function ReportPage({ params }: { params: { id: string } })
               <p className="text-sm text-gray-600 italic max-w-2xl">{report.strategy_note}</p>
             )}
           </div>
-          <p className="text-sm text-gray-500 text-right shrink-0 ml-6 mt-1">
-            {report.subreddits_scanned} subreddits · {report.threads_found} threads ·{' '}
-            {report.high_priority_count} high priority
+          <p className="text-sm text-gray-500 shrink-0 ml-6 mt-1 flex flex-wrap gap-x-3 gap-y-1 justify-end">
+            <span>{report.subreddits_scanned} subreddits</span>
+            <span>{report.threads_found} threads</span>
+            <span>{report.high_priority_count} high priority</span>
           </p>
         </div>
       </div>
