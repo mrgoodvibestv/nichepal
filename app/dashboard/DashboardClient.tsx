@@ -59,15 +59,50 @@ export default function DashboardClient({
 }) {
   const router = useRouter()
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  // Tracks report IDs currently being analyzed — prevents double-calling analyze
+  const analyzingRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
-    const hasGenerating = reports.some(r => r.status === 'generating')
+    const generatingReports = reports.filter(r => r.status === 'generating')
 
-    if (hasGenerating) {
-      intervalRef.current = setInterval(() => {
-        router.refresh()
-      }, 10_000)
+    if (generatingReports.length === 0) {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+      return
     }
+
+    intervalRef.current = setInterval(async () => {
+      for (const report of generatingReports) {
+        try {
+          const res = await fetch(`/api/reports/status/${report.id}`)
+          const data: {
+            status?: string
+            apifyReady?: boolean
+            datasetId?: string
+            error?: string
+          } = await res.json()
+
+          // Terminal state — refresh to re-render with new status
+          if (data.status === 'complete' || data.status === 'failed') {
+            router.refresh()
+            return
+          }
+
+          // Apify finished — trigger analysis exactly once per report
+          if (data.apifyReady && !analyzingRef.current.has(report.id)) {
+            analyzingRef.current.add(report.id)
+            try {
+              await fetch(`/api/reports/analyze/${report.id}`, { method: 'POST' })
+            } catch {
+              // analyze route will mark report as failed if it errors
+            }
+            router.refresh()
+            return
+          }
+        } catch {
+          // Network hiccup — try again next tick
+        }
+      }
+    }, 10_000)
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current)

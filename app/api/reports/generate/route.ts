@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { waitUntil } from '@vercel/functions'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { deductCredit } from '@/lib/credits'
-import { runReportGeneration } from '@/lib/generateReport'
 
 const MAX_SELECTED = 5
 
@@ -42,7 +40,11 @@ export async function POST(req: NextRequest) {
         ? selectedSubreddits.slice(0, MAX_SELECTED)
         : (profile.target_subreddits as string[] | null ?? []).slice(0, 5)
 
-    // Use service client for report insert (consistent with background work)
+    const tier = (profile.package as string) ?? 'starter'
+    const maxPostCount = tier === 'growth' ? 5 : 3
+    const maxItems = subsToScan.length * maxPostCount + 5
+
+    // Create report row
     const db = createServiceClient()
     const { data: report, error: reportError } = await db
       .from('reports')
@@ -54,19 +56,49 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to create report' }, { status: 500 })
     }
 
-    // Deduct credit while request context is still active
+    // Deduct credit
     await deductCredit(profile.id, 'Report generation')
 
-    // waitUntil keeps the serverless function alive after the response is sent
-    waitUntil(
-      runReportGeneration({
-        reportId: report.id,
-        profileId: profile.id,
-        selectedSubreddits: subsToScan,
-        tier: (profile.package as string) ?? 'starter',
-      })
+    // Start Apify — fire and save run IDs, return immediately
+    const token = process.env.APIFY_API_TOKEN!
+    const apifyRes = await fetch(
+      `https://api.apify.com/v2/acts/betterdevsscrape~reddit-scraper/runs?token=${token}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subreddits: subsToScan,
+          maxItems,
+          maxPostCount,
+          skipComments: true,
+          sort: 'hot',
+          minScore: 5,
+          proxy: { useApifyProxy: true },
+        }),
+      }
     )
 
+    if (!apifyRes.ok) {
+      await db.from('reports').update({ status: 'failed' }).eq('id', report.id)
+      return NextResponse.json({ error: 'Failed to start scrape' }, { status: 500 })
+    }
+
+    const apifyData = await apifyRes.json()
+    const runId: string = apifyData?.data?.id ?? ''
+    const datasetId: string = apifyData?.data?.defaultDatasetId ?? ''
+
+    if (!runId) {
+      await db.from('reports').update({ status: 'failed' }).eq('id', report.id)
+      return NextResponse.json({ error: 'No Apify run ID returned' }, { status: 500 })
+    }
+
+    // Save run IDs to the report so status + analyze routes can find them
+    await db
+      .from('reports')
+      .update({ apify_run_id: runId, apify_dataset_id: datasetId })
+      .eq('id', report.id)
+
+    // Total time: ~2s ✅
     return NextResponse.json({ reportId: report.id })
   } catch (err: unknown) {
     console.error('[reports/generate]', err)

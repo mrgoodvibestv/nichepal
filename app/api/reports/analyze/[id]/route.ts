@@ -1,14 +1,9 @@
+import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-
-interface GenerateOptions {
-  reportId: string
-  profileId: string
-  selectedSubreddits: string[]
-  tier: string
-}
 
 type Thread = {
   subreddit: string
@@ -27,73 +22,55 @@ type Thread = {
   body_snippet: string
 }
 
-export async function runReportGeneration(opts: GenerateOptions) {
-  const { reportId, profileId, selectedSubreddits, tier } = opts
-  const db = createServiceClient()
-  const token = process.env.APIFY_API_TOKEN!
-
+export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    // ── 1. Fetch profile ──
+    // ── 1. Auth + ownership check (user client, RLS enforced) ──
+    const supabase = await createClient()
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { data: reportCheck, error: checkError } = await supabase
+      .from('reports')
+      .select('id, status, apify_dataset_id, profile_id')
+      .eq('id', params.id)
+      .single()
+
+    if (checkError || !reportCheck) {
+      return NextResponse.json({ error: 'Report not found' }, { status: 404 })
+    }
+
+    // ── 2. Guard against double-run ──
+    if (reportCheck.status !== 'generating') {
+      return NextResponse.json({ status: reportCheck.status })
+    }
+
+    if (!reportCheck.apify_dataset_id) {
+      return NextResponse.json({ error: 'Dataset not ready' }, { status: 400 })
+    }
+
+    // ── 3. All subsequent DB ops via service client ──
+    const db = createServiceClient()
+    const token = process.env.APIFY_API_TOKEN!
+    const { profile_id: profileId, apify_dataset_id: datasetId } = reportCheck
+
+    // ── 4. Fetch profile for Claude context ──
     const { data: profile, error: profileError } = await db
       .from('profiles')
-      .select('*')
+      .select('business_name, positioning, keywords, target_subreddits')
       .eq('id', profileId)
       .single()
 
-    if (profileError || !profile) throw new Error('Profile not found')
-
-    // ── 2. Resolve subreddits and tier params ──
-    const subreddits: string[] =
-      selectedSubreddits && selectedSubreddits.length > 0
-        ? selectedSubreddits
-        : (profile.target_subreddits as string[] | null ?? []).slice(0, 5)
-
-    const maxPostCount = tier === 'growth' ? 5 : 3
-    const maxItems = subreddits.length * maxPostCount + 5
-
-    // ── 3. Start Apify Reddit scraper ──
-    const apifyRes = await fetch(
-      `https://api.apify.com/v2/acts/betterdevsscrape~reddit-scraper/runs?token=${token}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subreddits,
-          maxItems,
-          maxPostCount,
-          skipComments: true,
-          sort: 'hot',
-          minScore: 5,
-          proxy: { useApifyProxy: true },
-        }),
-      }
-    )
-
-    if (!apifyRes.ok) throw new Error(`Apify start failed: ${apifyRes.status}`)
-    const apifyData = await apifyRes.json()
-    const runId: string = apifyData?.data?.id
-    let datasetId: string = apifyData?.data?.defaultDatasetId ?? ''
-    if (!runId) throw new Error('No Apify run ID returned')
-
-    // ── 4. Poll for completion (every 5s, max 60 attempts = 5 min) ──
-    let succeeded = false
-    for (let i = 0; i < 60; i++) {
-      await new Promise(r => setTimeout(r, 5000))
-      try {
-        const pollRes = await fetch(
-          `https://api.apify.com/v2/actor-runs/${runId}?token=${token}`
-        )
-        const pollData = await pollRes.json()
-        const status: string = pollData?.data?.status ?? ''
-        datasetId = pollData?.data?.defaultDatasetId ?? datasetId
-        if (status === 'SUCCEEDED') { succeeded = true; break }
-        if (['FAILED', 'ABORTED', 'TIMED-OUT'].includes(status)) break
-      } catch { /* keep polling */ }
+    if (profileError || !profile) {
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
 
-    if (!succeeded) throw new Error('Apify run did not complete within timeout')
-
-    // ── 5. Fetch dataset items ──
+    // ── 5. Fetch Apify dataset ──
     const datasetRes = await fetch(
       `https://api.apify.com/v2/datasets/${datasetId}/items?token=${token}&limit=50`
     )
@@ -104,18 +81,22 @@ export async function runReportGeneration(opts: GenerateOptions) {
         )
       : []
 
-    if (scrapedPosts.length === 0) throw new Error('No posts returned from Apify')
+    if (scrapedPosts.length === 0) {
+      await db.from('reports').update({ status: 'failed' }).eq('id', params.id)
+      return NextResponse.json({ error: 'No posts in dataset' }, { status: 422 })
+    }
 
-    // ── 6. Deduplicate: filter URLs seen this week for this profile ──
+    // ── 6. Deduplicate: filter URLs seen this week ──
     const weekStart = new Date()
     weekStart.setHours(0, 0, 0, 0)
-    const dayOfWeek = weekStart.getDay()
-    weekStart.setDate(weekStart.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1))
+    const dow = weekStart.getDay()
+    weekStart.setDate(weekStart.getDate() - (dow === 0 ? 6 : dow - 1))
 
     const { data: weekReports } = await db
       .from('reports')
       .select('id')
       .eq('profile_id', profileId)
+      .neq('id', params.id) // exclude the current report
       .gte('generated_at', weekStart.toISOString())
 
     const weekReportIds = (weekReports ?? []).map(r => r.id)
@@ -133,8 +114,14 @@ export async function runReportGeneration(opts: GenerateOptions) {
       const post = p as Record<string, unknown>
       return post.url && !seenUrls.has(post.url as string)
     })
-    // Edge case: if everything was seen this week, fall back to all posts
     const postsToAnalyze = freshPosts.length > 0 ? freshPosts : scrapedPosts
+
+    // Count subreddits actually seen in this dataset
+    const subredditsScanned = new Set(
+      scrapedPosts
+        .map((p: unknown) => (p as Record<string, unknown>).subreddit as string)
+        .filter(Boolean)
+    ).size
 
     // ── 7. Claude analysis ──
     const message = await anthropic.messages.create({
@@ -198,16 +185,16 @@ ${JSON.stringify(postsToAnalyze.slice(0, 25))}`,
       .update({
         status: 'complete',
         strategy_note: parsed.strategy_note,
-        subreddits_scanned: subreddits.length,
+        subreddits_scanned: subredditsScanned,
         threads_found: threads.length,
         high_priority_count: highPriorityCount,
       })
-      .eq('id', reportId)
+      .eq('id', params.id)
 
     if (threads.length > 0) {
       await db.from('threads').insert(
         threads.map(t => ({
-          report_id: reportId,
+          report_id: params.id,
           ...t,
           upvote_ratio: t.upvote_ratio ?? 0,
           engaged: false,
@@ -215,12 +202,13 @@ ${JSON.stringify(postsToAnalyze.slice(0, 25))}`,
       )
     }
 
-    console.log(`[generateReport] Report ${reportId} complete — ${threads.length} threads`)
+    console.log(`[reports/analyze] Report ${params.id} complete — ${threads.length} threads`)
+    // Total time: ~8-10s ✅
+    return NextResponse.json({ success: true })
   } catch (err: unknown) {
-    console.error('[generateReport] Error:', err)
-    await createServiceClient()
-      .from('reports')
-      .update({ status: 'failed' })
-      .eq('id', reportId)
+    console.error('[reports/analyze]', err)
+    const db = createServiceClient()
+    await db.from('reports').update({ status: 'failed' }).eq('id', params.id)
+    return NextResponse.json({ error: 'Analysis failed' }, { status: 500 })
   }
 }
