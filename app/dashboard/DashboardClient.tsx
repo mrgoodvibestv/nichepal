@@ -111,23 +111,6 @@ export default function DashboardClient({
 
   return (
     <div>
-      {/* Stats bar */}
-      <div className="bg-white border-b border-gray-100 px-4 sm:px-8 py-4 flex gap-8">
-        <div>
-          <p className="text-xl font-bold bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] bg-clip-text text-transparent">
-            {reports.length}
-          </p>
-          <p className="text-xs text-gray-400 mt-0.5">Total Reports</p>
-        </div>
-        <div className="w-px bg-gray-100 self-stretch" />
-        <div>
-          <p className="text-xl font-bold bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] bg-clip-text text-transparent">
-            {credits}
-          </p>
-          <p className="text-xs text-gray-400 mt-0.5">Credits Remaining</p>
-        </div>
-      </div>
-
       {/* Report list */}
       <div className="px-4 sm:px-8 py-6">
         {reports.length === 0 ? (
@@ -140,9 +123,14 @@ export default function DashboardClient({
             <GenerateButton />
           </div>
         ) : (
-          <div className="max-w-4xl">
+          <div>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-              <h2 className="text-lg font-semibold text-black">Your Reports</h2>
+              <div>
+                <h2 className="text-lg font-semibold text-black">Your Reports</h2>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {reports.length} reports · {credits} credits remaining
+                </p>
+              </div>
               <GenerateButton />
             </div>
             <div className="space-y-4">
