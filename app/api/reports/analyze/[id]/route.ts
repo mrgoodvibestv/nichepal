@@ -164,26 +164,37 @@ Reject threads ONLY if:
 - The audience is completely unrelated (e.g. gaming threads for a B2B fintech)
 - There is genuinely no angle to add value without it feeling forced or random
 
-Return a JSON object:
+STRATEGY NOTE:
+${audienceName
+  ? 'For strategy_note: Write 2-3 sentences on how to engage ' + audienceName + ' this week — be specific about the indirect angle, what persona to adopt, and what topics to own'
+  : 'For strategy_note: Write 2-3 sentences on Reddit strategy this week — be specific about topics, persona, and indirect angles'}
+
+FIELD NOTES:
+- why_engage: explain the INDIRECT angle — why this thread, what persona, what unique value
+- comment_template: write as a knowledgeable practitioner — no brand mentions, no CTAs, sounds like a real person
+- body_snippet: first 150 chars of post body, or empty string
+- thread_type values: trending (posted <48hrs and >50 upvotes), rising (gaining traction), evergreen (always relevant)
+- priority values: high (engage within 24 hours), medium (engage this week)
+- relevance_score: 1-10 integer
+
+Return a JSON object with EXACTLY this structure:
 {
-  "strategy_note": "${audienceName
-    ? '2-3 sentences on how to engage ' + audienceName + ' this week — be specific about the indirect angle, what persona to adopt, and what topics to own'
-    : '2-3 sentences on Reddit strategy this week — be specific about topics, persona, and indirect angles'}",
+  "strategy_note": "string",
   "threads": [{
-    "subreddit": string,
-    "title": string,
-    "url": string,
-    "author": string,
-    "upvotes": number,
-    "num_comments": number,
-    "upvote_ratio": number,
-    "posted_at": string (ISO 8601),
-    "thread_type": "trending"|"rising"|"evergreen",
-    "priority": "high"|"medium",
-    "relevance_score": number (1-10),
-    "why_engage": string (explain the INDIRECT angle — why this thread, what persona, what unique value),
-    "comment_template": string (write as a knowledgeable practitioner sharing genuine perspective — no brand mentions, no CTAs, sounds like a real person),
-    "body_snippet": string (first 150 chars or empty string)
+    "subreddit": "string",
+    "title": "string",
+    "url": "string",
+    "author": "string",
+    "upvotes": 0,
+    "num_comments": 0,
+    "upvote_ratio": 0.0,
+    "posted_at": "ISO 8601 string",
+    "thread_type": "trending",
+    "priority": "high",
+    "relevance_score": 0,
+    "why_engage": "string",
+    "comment_template": "string",
+    "body_snippet": "string"
   }]
 }
 
@@ -191,8 +202,6 @@ Rules:
 - Include threads where relevance_score >= 5
 - Be generous with relevance for adjacent topics where the audience is present — a 6/10 thread with the right audience beats a 9/10 thread with the wrong one
 - Max ${maxThreads} threads, sorted by priority (high first) then relevance_score desc
-- trending = posted <48hrs and >50 upvotes, rising = gaining traction, evergreen = always relevant
-- high priority = engage within 24 hours, medium = this week
 - If fewer than 3 threads meet the bar, include the best ones and note why in why_engage
 
 Posts to analyze:
@@ -204,7 +213,14 @@ ${JSON.stringify(postsToAnalyze.slice(0, 40))}`,
     // ── 8. Parse Claude response ──
     const raw = message.content[0].type === 'text' ? message.content[0].text : ''
     const cleaned = raw.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim()
-    const parsed: { strategy_note: string; threads: Thread[] } = JSON.parse(cleaned)
+    let parsed: { strategy_note: string; threads: Thread[] }
+    try {
+      parsed = JSON.parse(cleaned)
+    } catch (parseErr) {
+      console.error('[analyze] claude raw response:', raw)
+      console.error('[analyze] json parse error:', parseErr)
+      throw parseErr
+    }
 
     const threads = parsed.threads ?? []
     const highPriorityCount = threads.filter(t => t.priority === 'high').length
