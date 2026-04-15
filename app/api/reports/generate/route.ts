@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { waitUntil } from '@vercel/functions'
 import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import { deductCredit } from '@/lib/credits'
+import { runReportGeneration } from '@/lib/generateReport'
+
+const MAX_SELECTED = 5
 
 export async function POST(req: NextRequest) {
   try {
@@ -32,8 +37,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No credits remaining' }, { status: 400 })
     }
 
-    // Create report row
-    const { data: report, error: reportError } = await supabase
+    const subsToScan: string[] =
+      selectedSubreddits && selectedSubreddits.length > 0
+        ? selectedSubreddits.slice(0, MAX_SELECTED)
+        : (profile.target_subreddits as string[] | null ?? []).slice(0, 5)
+
+    // Use service client for report insert (consistent with background work)
+    const db = createServiceClient()
+    const { data: report, error: reportError } = await db
       .from('reports')
       .insert({ profile_id: profile.id, status: 'generating' })
       .select('id')
@@ -46,28 +57,15 @@ export async function POST(req: NextRequest) {
     // Deduct credit while request context is still active
     await deductCredit(profile.id, 'Report generation')
 
-    // Resolve which subreddits to scan
-    const subsToScan: string[] =
-      selectedSubreddits && selectedSubreddits.length > 0
-        ? selectedSubreddits.slice(0, MAX_SELECTED)
-        : (profile.target_subreddits as string[] | null ?? []).slice(0, 5)
-
-    // Fire-and-forget: call the process endpoint which handles Apify + Claude
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
-    fetch(`${siteUrl}/api/reports/process`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-internal-secret': process.env.INTERNAL_SECRET ?? '',
-      },
-      body: JSON.stringify({
+    // waitUntil keeps the serverless function alive after the response is sent
+    waitUntil(
+      runReportGeneration({
         reportId: report.id,
         profileId: profile.id,
         selectedSubreddits: subsToScan,
-        package: profile.package ?? 'starter',
-      }),
-      keepalive: true,
-    })
+        tier: (profile.package as string) ?? 'starter',
+      })
+    )
 
     return NextResponse.json({ reportId: report.id })
   } catch (err: unknown) {
@@ -75,5 +73,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to start generation' }, { status: 500 })
   }
 }
-
-const MAX_SELECTED = 5
