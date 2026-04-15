@@ -17,9 +17,8 @@ type Report = {
   audience_name: string | null
 }
 
-function formatWeekOf(dateStr: string): string {
-  const [year, month, day] = dateStr.split('-').map(Number)
-  return new Date(year, month - 1, day).toLocaleDateString('en-US', {
+function formatReportDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('en-US', {
     month: 'long',
     day: 'numeric',
     year: 'numeric',
@@ -155,7 +154,7 @@ export default function DashboardClient({
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <h3 className="font-semibold text-lg text-black">
-                        Week of {formatWeekOf(report.week_of)}
+                        Report · {formatReportDate(report.generated_at)}
                       </h3>
                       {report.audience_name && (
                         <span className="text-xs text-[#4B6BF5] inline-flex items-center gap-1 truncate max-w-[200px]">

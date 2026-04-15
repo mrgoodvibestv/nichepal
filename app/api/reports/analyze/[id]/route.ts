@@ -126,18 +126,13 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       ? `\nTarget Audience: ${audienceName}\nWho they are: ${reportCheck.audience_description ?? ''}\nGoal: ${reportCheck.audience_goal ?? ''}\n`
       : ''
 
-    const targetDescription = audienceName || 'their target audience'
     const engagementGoal = (reportCheck.audience_goal as string | null) ?? 'grow awareness and engagement'
-
-    const strategyNoteInstruction = audienceName
-      ? `"strategy_note": "2-3 sentences on how to engage ${audienceName} this week on Reddit to achieve: ${engagementGoal}"`
-      : `"strategy_note": "2-3 sentence weekly Reddit strategy specific to this business"`
 
     // ── 7. Claude analysis ──
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 4000,
-      system: 'You are a Reddit intelligence analyst specializing in finding threads where this specific business can add genuine value. Be STRICT — only include threads that are directly relevant to this business\'s niche, product, or audience. Return ONLY valid JSON, no markdown, no code blocks.',
+      system: 'You are a Reddit engagement strategist helping a business build authentic presence in communities where their target audience already spends time. You understand that the best community engagement is never direct promotion — it\'s a knowledgeable person sharing genuine perspective that happens to reflect their experience and worldview.\n\nReturn ONLY valid JSON, no markdown, no code blocks.',
       messages: [
         {
           role: 'user',
@@ -145,48 +140,50 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 Positioning: ${profile.positioning ?? ''}
 Keywords: ${(profile.keywords as string[] | null ?? []).join(', ')}
 ${audienceContext}
-You are scanning Reddit for threads where this business can reach ${targetDescription}.
+Your job is to find Reddit threads where someone from this business can show up as a knowledgeable, credible voice — NOT as a brand, but as a person with relevant expertise and perspective.
+${audienceName ? `\nThe goal with ${audienceName}: ${engagementGoal}` : ''}
 
-Find threads where engaging authentically would help this business achieve its goal: ${engagementGoal}.
+IMPORTANT — Think creatively about relevance:
+- Threads do NOT need to be about this business's product directly
+- Look for threads where the TARGET AUDIENCE is venting, asking questions, or debating topics adjacent to what this business knows about
+- The best threads are where someone with this business's background could add a genuinely useful perspective that naturally reflects how they see the world
+- Example: A film equity crowdfunding platform engaging retail investors doesn't need to find threads about film investing — they should find threads about stock market frustration, portfolio diversification, or alternative assets, and show up as someone who solved that problem differently
+- The comment template should sound like a smart practitioner sharing hard-won perspective, not a marketer
 
-Be STRICT — only include threads directly relevant to this specific audience's interests and the business's goal with them.
-
-Reject threads that are:
-- Not relevant to the target audience's worldview or concerns
-- About completely different industries or products
-- Too generic with no specific connection to this audience
-- Only tangentially related to the keywords
+Reject threads ONLY if:
+- The audience is completely unrelated (e.g. gaming threads for a B2B fintech)
+- There is genuinely no angle to add value without it feeling forced or random
 
 Return a JSON object:
 {
-  ${strategyNoteInstruction},
-  "threads": [
-    {
-      "subreddit": string,
-      "title": string,
-      "url": string,
-      "author": string,
-      "upvotes": number,
-      "num_comments": number,
-      "upvote_ratio": number,
-      "posted_at": string (ISO 8601),
-      "thread_type": "trending" | "rising" | "evergreen",
-      "priority": "high" | "medium",
-      "relevance_score": number (1-10),
-      "why_engage": string (one sentence — specific to this business and audience),
-      "comment_template": string (2-3 sentences adding genuine value, no promotion),
-      "body_snippet": string (first 150 chars of post body, or empty string)
-    }
-  ]
+  "strategy_note": "${audienceName
+    ? `2-3 sentences on how to engage ${audienceName} this week — be specific about the indirect angle, what persona to adopt, and what topics to own`
+    : '2-3 sentences on Reddit strategy this week — be specific about topics, persona, and indirect angles'}",
+  "threads": [{
+    "subreddit": string,
+    "title": string,
+    "url": string,
+    "author": string,
+    "upvotes": number,
+    "num_comments": number,
+    "upvote_ratio": number,
+    "posted_at": string (ISO 8601),
+    "thread_type": "trending"|"rising"|"evergreen",
+    "priority": "high"|"medium",
+    "relevance_score": number (1-10),
+    "why_engage": string (explain the INDIRECT angle — why this thread, what persona, what unique value),
+    "comment_template": string (write as a knowledgeable practitioner sharing genuine perspective — no brand mentions, no CTAs, sounds like a real person),
+    "body_snippet": string (first 150 chars or empty string)
+  }]
 }
 
 Rules:
-- ONLY include threads with relevance_score >= 6
+- Include threads where relevance_score >= 5
+- Be generous with relevance for adjacent topics where the audience is present — a 6/10 thread with the right audience beats a 9/10 thread with the wrong one
 - Max ${maxThreads} threads, sorted by priority (high first) then relevance_score desc
-- thread_type: trending = posted <48hrs and >50 upvotes, rising = gaining traction, evergreen = always relevant
-- priority high = engage within 24 hours, medium = engage this week
-- If fewer than 3 threads meet the relevance bar, include the best ones anyway
-- comment_template must sound like a knowledgeable community member, not a brand
+- trending = posted <48hrs and >50 upvotes, rising = gaining traction, evergreen = always relevant
+- high priority = engage within 24 hours, medium = this week
+- If fewer than 3 threads meet the bar, include the best ones and note why in why_engage
 
 Posts to analyze:
 ${JSON.stringify(postsToAnalyze.slice(0, 40))}`,
