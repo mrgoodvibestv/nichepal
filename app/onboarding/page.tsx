@@ -170,7 +170,7 @@ export default function OnboardingPage() {
         ))}
       </div>
 
-      <div className={`${step === 2 ? 'max-w-5xl' : 'max-w-lg'} mx-auto px-4 sm:px-6 pb-20`}>
+      <div className={`${step === 2 ? 'max-w-5xl' : 'max-w-lg'} mx-auto px-4 sm:px-6 pt-8 pb-16`}>
         {/* Logo */}
         <div className="text-center mb-8 mt-2">
           <span className="text-xl font-bold">
@@ -241,95 +241,95 @@ export default function OnboardingPage() {
         {/* ── SCREEN 2 — Review & confirm ── */}
         {step === 2 && (
           <div>
-            <div className="text-center mb-8">
-              <h1 className="text-2xl font-bold text-black mb-2">Here&apos;s what we found</h1>
-              <p className="text-sm text-gray-500">
-                Review and adjust — this shapes every report we generate for you.
-              </p>
-            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-
-              {/* Left column — profile fields + save button */}
-              <div className="space-y-6">
-                {/* Business name */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Business name</label>
-                  <input
-                    type="text"
-                    value={businessName}
-                    onChange={e => setBusinessName(e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4B6BF5] focus:border-transparent"
-                  />
+              {/* Left column — profile card */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+                <div className="mb-6">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400 mb-1">Your Profile</p>
+                  <h2 className="text-xl font-bold text-black">Review your setup</h2>
+                  <p className="text-sm text-gray-500 mt-1">This shapes every report we generate for you.</p>
                 </div>
 
-                {/* Positioning */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Positioning</label>
-                  <textarea
-                    rows={3}
-                    value={positioning}
-                    onChange={e => setPositioning(e.target.value)}
-                    placeholder="What you do and who you serve"
-                    className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4B6BF5] focus:border-transparent resize-none max-h-24 overflow-y-auto"
-                  />
-                </div>
-
-                {/* Tone */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Tone</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {TONE_OPTIONS.map(t => (
-                      <button
-                        key={t.value}
-                        type="button"
-                        onClick={() => setTone(t.value)}
-                        className={`relative border-2 rounded-xl p-4 text-center cursor-pointer transition text-sm font-medium ${
-                          tone === t.value
-                            ? 'border-[#4B6BF5] bg-blue-50/30 text-[#4B6BF5]'
-                            : 'border-gray-200 text-gray-700 hover:border-gray-300'
-                        }`}
-                      >
-                        {tone === t.value && (
-                          <span className="absolute top-2 right-2 text-xs bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] bg-clip-text text-transparent font-bold">
-                            ✓
-                          </span>
-                        )}
-                        {t.label}
-                      </button>
-                    ))}
+                <div className="space-y-6">
+                  {/* Business name */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Business name</label>
+                    <input
+                      type="text"
+                      value={businessName}
+                      onChange={e => setBusinessName(e.target.value)}
+                      className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4B6BF5] focus:border-transparent"
+                    />
                   </div>
+
+                  {/* Positioning */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Positioning</label>
+                    <textarea
+                      rows={3}
+                      value={positioning}
+                      onChange={e => setPositioning(e.target.value)}
+                      placeholder="What you do and who you serve"
+                      className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4B6BF5] focus:border-transparent resize-none max-h-24 overflow-y-auto"
+                    />
+                  </div>
+
+                  {/* Tone */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Tone</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {TONE_OPTIONS.map(t => (
+                        <button
+                          key={t.value}
+                          type="button"
+                          onClick={() => setTone(t.value)}
+                          className={`relative border-2 rounded-xl p-4 text-center cursor-pointer transition text-sm font-medium ${
+                            tone === t.value
+                              ? 'border-[#4B6BF5] bg-blue-50/30 text-[#4B6BF5]'
+                              : 'border-gray-200 text-gray-700 hover:border-gray-300'
+                          }`}
+                        >
+                          {tone === t.value && (
+                            <span className="absolute top-2 right-2 text-xs bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] bg-clip-text text-transparent font-bold">
+                              ✓
+                            </span>
+                          )}
+                          {t.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {saveError && <p className="text-sm text-red-500">{saveError}</p>}
+
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="w-full rounded-lg py-3 font-semibold text-white bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {saving ? 'Saving...' : "Looks good, let's go →"}
+                  </button>
                 </div>
-
-                {saveError && <p className="text-sm text-red-500">{saveError}</p>}
-
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="w-full rounded-lg py-3 font-semibold text-white bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {saving ? 'Saving...' : "Looks good, let's go →"}
-                </button>
               </div>
 
-              {/* Right column — audiences */}
-              <div className="lg:max-h-[calc(100vh-200px)] lg:overflow-y-auto">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Your audiences
-                </label>
-                <p className="text-xs text-gray-400 mb-3">
-                  Claude detected these from your website. Edit or remove as needed.
-                </p>
+              {/* Right column — audiences card */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 lg:max-h-[calc(100vh-200px)] lg:overflow-y-auto">
+                <div className="mb-6">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400 mb-1">Your Audiences</p>
+                  <h2 className="text-xl font-bold text-black">Who you&apos;re targeting</h2>
+                  <p className="text-sm text-gray-500 mt-1">Edit or remove audiences. Each one shapes a different set of reports.</p>
+                </div>
 
                 <div className="space-y-3">
                   {audiences.map(audience => (
                     <div
                       key={audience.id}
-                      className="bg-white rounded-2xl border border-gray-100 p-4"
+                      className="bg-gray-50 rounded-xl border border-gray-100 p-5 space-y-3 relative"
                     >
                       {/* Top row: gradient name pill + remove button */}
-                      <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] text-white">
                           {audience.name || 'Unnamed audience'}
                         </span>
@@ -348,7 +348,7 @@ export default function OnboardingPage() {
                       <div className="space-y-3">
                         {/* Name */}
                         <div>
-                          <p className="text-xs font-medium text-gray-400 mb-1">Audience name</p>
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400 mb-1">Audience name</p>
                           <input
                             type="text"
                             value={audience.name}
@@ -360,7 +360,7 @@ export default function OnboardingPage() {
 
                         {/* Description */}
                         <div>
-                          <p className="text-xs font-medium text-gray-400 mb-1">Who they are</p>
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400 mb-1">Who they are</p>
                           <textarea
                             rows={2}
                             value={audience.description}
@@ -372,7 +372,7 @@ export default function OnboardingPage() {
 
                         {/* Goal */}
                         <div>
-                          <p className="text-xs font-medium text-gray-400 mb-1">What you want them to do</p>
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400 mb-1">What you want them to do</p>
                           <input
                             type="text"
                             value={audience.goal}
@@ -384,12 +384,12 @@ export default function OnboardingPage() {
 
                         {/* Subreddits */}
                         <div>
-                          <p className="text-xs font-medium text-gray-400 mb-2">Their communities</p>
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400 mb-2">Their communities</p>
                           <div className="flex flex-wrap gap-2">
                             {audience.subreddits.map(sub => (
                               <span
                                 key={sub}
-                                className="bg-gray-50 border border-gray-200 rounded-full px-3 py-1 text-sm flex items-center gap-1.5"
+                                className="bg-white border border-gray-200 rounded-full px-3 py-1 text-sm flex items-center gap-1.5"
                               >
                                 r/{sub}
                                 <button
@@ -414,13 +414,13 @@ export default function OnboardingPage() {
                                 }}
                                 onBlur={commitSubForAudience}
                                 placeholder="subreddit name"
-                                className="bg-gray-50 border border-dashed border-[#4B6BF5] rounded-full px-3 py-1 text-sm text-[#4B6BF5] focus:outline-none w-36"
+                                className="bg-white border border-dashed border-[#4B6BF5] rounded-full px-3 py-1 text-sm text-[#4B6BF5] focus:outline-none w-36"
                               />
                             ) : (
                               <button
                                 type="button"
                                 onClick={() => setAddingSubForId(audience.id)}
-                                className="bg-gray-50 border border-dashed border-gray-300 rounded-full px-3 py-1 text-sm text-[#4B6BF5] hover:border-[#4B6BF5] transition"
+                                className="bg-white border border-dashed border-gray-300 rounded-full px-3 py-1 text-sm text-[#4B6BF5] hover:border-[#4B6BF5] transition"
                               >
                                 + Add
                               </button>
