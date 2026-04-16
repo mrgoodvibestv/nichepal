@@ -241,10 +241,10 @@ export default function OnboardingPage() {
         {/* ── SCREEN 2 — Review & confirm ── */}
         {step === 2 && (
           <div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:items-stretch">
 
               {/* Left column — profile card */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 flex flex-col h-[600px] overflow-y-auto">
                 <div className="mb-6">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400 mb-1">Your Profile</p>
                   <h2 className="text-xl font-bold text-black">Review your setup</h2>
@@ -301,21 +301,11 @@ export default function OnboardingPage() {
                     </div>
                   </div>
 
-                  {saveError && <p className="text-sm text-red-500">{saveError}</p>}
-
-                  <button
-                    type="button"
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="w-full rounded-lg py-3 font-semibold text-white bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    {saving ? 'Saving...' : "Looks good, let's go →"}
-                  </button>
                 </div>
               </div>
 
               {/* Right column — audiences card */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 lg:max-h-[calc(100vh-200px)] lg:overflow-y-auto">
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 flex flex-col h-[600px] overflow-y-auto">
                 <div className="mb-6">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400 mb-1">Your Audiences</p>
                   <h2 className="text-xl font-bold text-black">Who you&apos;re targeting</h2>
@@ -444,6 +434,20 @@ export default function OnboardingPage() {
                 )}
               </div>
 
+            </div>
+
+            <div className="flex flex-col items-center mt-6">
+              {saveError && (
+                <p className="text-sm text-red-500 mb-3 text-center">{saveError}</p>
+              )}
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving}
+                className="w-full sm:w-auto sm:min-w-[280px] rounded-xl px-12 py-4 font-semibold text-white text-base bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {saving ? 'Saving...' : "Looks good, let's go →"}
+              </button>
             </div>
           </div>
         )}
