@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
       "name": string (2-3 words, e.g. "Early-stage founders"),
       "description": string (1-2 sentences: who they are and what they care about),
       "goal": string (1 sentence: what the business wants them to do),
-      "subreddits": string[] (4-6 subreddits without r/ prefix most relevant to THIS audience)
+      "subreddits": string[] (up to 5 subreddits without r/ prefix most relevant to THIS audience)
     }
   ]
 }
@@ -67,6 +67,20 @@ Rules for audiences:
 - Each audience must have meaningfully different subreddits
 - The subreddits for each audience should be where THAT specific audience hangs out
 - Do NOT include a top-level target_subreddits field — subreddits live inside each audience
+
+For each audience's subreddits array, ONLY suggest subreddits that you know with high confidence meet ALL of these criteria:
+- Have at least 10,000 members
+- Have regular posting activity (at least a few posts per week)
+- Are communities you are certain actually exist
+- Are NOT subreddits you are guessing at or inventing
+
+You may include niche subreddits if you are confident they are genuinely active. A tight niche community with 15k members posting daily is better than a large community that has gone quiet.
+
+The key filter is ACTIVITY not size. Only suggest subreddits where you are confident there are real conversations happening regularly right now.
+
+If you are not confident a subreddit is real and active, DO NOT include it. It is better to suggest 3 subreddits you are certain about than 6 where some are guesses.
+
+NEVER invent subreddit names that sound plausible — only suggest communities you know are real and posting regularly.
 
 Website content:
 ${content}`,
