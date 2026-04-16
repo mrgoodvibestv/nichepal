@@ -15,6 +15,7 @@ type Report = {
   high_priority_count: number
   generated_at: string
   audience_name: string | null
+  selected_subreddits: string[] | null
 }
 
 function formatReportDate(dateStr: string): string {
@@ -142,10 +143,17 @@ export default function DashboardClient({
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <h3 className="font-semibold text-lg text-black">
-                        Report · {formatReportDate(report.generated_at)}
+                        {report.selected_subreddits?.[0]
+                          ? `r/${report.selected_subreddits[0]}`
+                          : 'Report'}
                       </h3>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {formatReportDate(report.generated_at)}
+                        {report.threads_found > 0 ? ` · ${report.threads_found} threads` : ''}
+                        {report.high_priority_count > 0 ? ` · ${report.high_priority_count} high priority` : ''}
+                      </p>
                       {report.audience_name && (
-                        <span className="text-xs text-[#4B6BF5] inline-flex items-center gap-1 truncate max-w-[200px]">
+                        <span className="text-xs text-[#4B6BF5] inline-flex items-center gap-1 truncate max-w-[200px] mt-0.5">
                           👥 {report.audience_name}
                         </span>
                       )}

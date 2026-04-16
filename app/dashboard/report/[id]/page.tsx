@@ -50,7 +50,7 @@ export default async function ReportPage({ params }: { params: { id: string } })
   // Fetch report — RLS + explicit profile_id check
   const { data: report } = await supabase
     .from('reports')
-    .select('id, status, generated_at, strategy_note, subreddits_scanned, threads_found, high_priority_count, audience_name')
+    .select('id, status, generated_at, strategy_note, subreddits_scanned, threads_found, high_priority_count, audience_name, selected_subreddits')
     .eq('id', params.id)
     .eq('profile_id', profile.id)
     .single()
@@ -67,6 +67,7 @@ export default async function ReportPage({ params }: { params: { id: string } })
     .order('relevance_score', { ascending: false })
 
   const threadList: Thread[] = threads ?? []
+  const subredditTitle = (report.selected_subreddits as string[] | null)?.[0]
 
   return (
     <div>
@@ -81,9 +82,10 @@ export default async function ReportPage({ params }: { params: { id: string } })
 
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-black mb-1">
-              Report · {formatDate(report.generated_at)}
+            <h1 className="text-2xl font-bold text-black mb-0.5">
+              {subredditTitle ? `r/${subredditTitle}` : 'Report'}
             </h1>
+            <p className="text-sm text-gray-400 mb-2">{formatDate(report.generated_at)}</p>
             {report.audience_name && (
               <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] bg-clip-text text-transparent mb-2">
                 👥 {report.audience_name}

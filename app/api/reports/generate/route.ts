@@ -3,8 +3,6 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { deductCredit } from '@/lib/credits'
 
-const MAX_SELECTED = 5
-
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient()
@@ -18,13 +16,13 @@ export async function POST(req: NextRequest) {
     }
 
     const {
-      selectedSubreddits,
+      subreddit,
       audienceId,
       audienceName,
       audienceDescription,
       audienceGoal,
     } = await req.json().catch(() => ({})) as {
-      selectedSubreddits?: string[]
+      subreddit?: string
       audienceId?: string
       audienceName?: string
       audienceDescription?: string
@@ -45,13 +43,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No credits remaining' }, { status: 400 })
     }
 
-    const subsToScan: string[] =
-      selectedSubreddits && selectedSubreddits.length > 0
-        ? selectedSubreddits.slice(0, MAX_SELECTED)
-        : (profile.target_subreddits as string[] | null ?? []).slice(0, 5)
+    const subToScan: string =
+      subreddit ||
+      (profile.target_subreddits as string[] | null ?? [])[0] ||
+      ''
+
+    if (!subToScan) {
+      return NextResponse.json({ error: 'No subreddit specified' }, { status: 400 })
+    }
 
     const maxPostCount = 15
-    const maxItems = subsToScan.length * 15 + 20
+    const maxItems = 35  // single subreddit: 15 posts + 20 buffer
 
     // Create report row
     const db = createServiceClient()
@@ -76,7 +78,7 @@ export async function POST(req: NextRequest) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          subreddits: subsToScan,
+          subreddits: [subToScan],
           maxItems,
           maxPostCount,
           skipComments: true,
@@ -107,7 +109,7 @@ export async function POST(req: NextRequest) {
       .update({
         apify_run_id: runId,
         apify_dataset_id: datasetId,
-        selected_subreddits: subsToScan,
+        selected_subreddits: [subToScan],
         audience_id: audienceId ?? null,
         audience_name: audienceName ?? null,
         audience_description: audienceDescription ?? null,

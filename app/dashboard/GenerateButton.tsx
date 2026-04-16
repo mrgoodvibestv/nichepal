@@ -10,18 +10,15 @@ interface Audience {
   subreddits: string[]
 }
 
-const MAX_SELECTED = 5
-
 export default function GenerateButton() {
   const [audiences, setAudiences] = useState<Audience[]>([])
   const [selectedAudienceId, setSelectedAudienceId] = useState<string>('')
   const [subreddits, setSubreddits] = useState<string[]>([])
-  const [selected, setSelected] = useState<string[]>([])
+  const [selectedSubreddit, setSelectedSubreddit] = useState<string>('')
   const [customInput, setCustomInput] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [maxError, setMaxError] = useState(false)
 
   // Fetch profile once
   useEffect(() => {
@@ -34,12 +31,11 @@ export default function GenerateButton() {
           setSelectedAudienceId(aud[0].id)
           const subs = aud[0].subreddits ?? []
           setSubreddits(subs)
-          setSelected(subs.slice(0, 3))
+          setSelectedSubreddit(subs[0] ?? '')
         } else {
-          // Legacy: no audiences, fall back to flat target_subreddits
           const subs = profile.target_subreddits ?? []
           setSubreddits(subs)
-          setSelected(subs.slice(0, 3))
+          setSelectedSubreddit(subs[0] ?? '')
         }
       })
       .catch(() => {})
@@ -51,50 +47,29 @@ export default function GenerateButton() {
     setSelectedAudienceId(id)
     const subs = aud.subreddits ?? []
     setSubreddits(subs)
-    setSelected(subs.slice(0, 3))
-    setMaxError(false)
+    setSelectedSubreddit(subs[0] ?? '')
   }
 
   function openModal() {
     setError('')
-    setMaxError(false)
     setShowModal(true)
   }
 
   function closeModal() {
     setShowModal(false)
     setCustomInput('')
-    setMaxError(false)
-  }
-
-  function toggleSubreddit(sub: string) {
-    setMaxError(false)
-    if (selected.includes(sub)) {
-      setSelected(selected.filter(s => s !== sub))
-    } else {
-      if (selected.length >= MAX_SELECTED) {
-        setMaxError(true)
-        return
-      }
-      setSelected([...selected, sub])
-    }
   }
 
   function addCustom() {
     const sub = customInput.trim().replace(/^r\//i, '')
     if (!sub) return
-    if (selected.length >= MAX_SELECTED) {
-      setMaxError(true)
-      return
-    }
     if (!subreddits.includes(sub)) setSubreddits(prev => [...prev, sub])
-    if (!selected.includes(sub)) setSelected(prev => [...prev, sub])
+    setSelectedSubreddit(sub)
     setCustomInput('')
-    setMaxError(false)
   }
 
   async function handleGenerate() {
-    if (selected.length === 0) return
+    if (!selectedSubreddit) return
     setError('')
     setLoading(true)
 
@@ -105,7 +80,7 @@ export default function GenerateButton() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          selectedSubreddits: selected,
+          subreddit: selectedSubreddit,
           audienceId: activeAudience?.id ?? null,
           audienceName: activeAudience?.name ?? null,
           audienceDescription: activeAudience?.description ?? null,
@@ -170,37 +145,30 @@ export default function GenerateButton() {
               </div>
             )}
 
-            {/* Community selector */}
-            <h2 className="text-base font-semibold text-black mb-1">Choose communities to scan</h2>
-            <p className="text-sm text-gray-500 mb-4">Select up to 5 communities for this report</p>
+            {/* Subreddit selector */}
+            <h2 className="text-base font-semibold text-black mb-1">Choose a subreddit to scan</h2>
+            <p className="text-sm text-gray-500 mb-4">Select one community for this report</p>
 
-            <div className="border border-gray-100 rounded-xl overflow-hidden mb-4">
-              {subreddits.length === 0 ? (
-                <p className="text-sm text-gray-400 px-4 py-6 text-center">No communities found.</p>
-              ) : (
-                subreddits.map((sub, i) => (
-                  <label
+            {subreddits.length === 0 ? (
+              <p className="text-sm text-gray-400 py-3 text-center mb-4">No communities found.</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                {subreddits.map(sub => (
+                  <button
                     key={sub}
-                    className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition ${
-                      i < subreddits.length - 1 ? 'border-b border-gray-50' : ''
+                    type="button"
+                    onClick={() => setSelectedSubreddit(sub)}
+                    className={`border-2 rounded-xl px-3 py-2.5 text-sm text-left transition truncate ${
+                      selectedSubreddit === sub
+                        ? 'border-[#4B6BF5] bg-blue-50/30 text-[#4B6BF5]'
+                        : 'border-gray-200 text-gray-600 hover:border-gray-300'
                     }`}
                   >
-                    <input
-                      type="checkbox"
-                      checked={selected.includes(sub)}
-                      onChange={() => toggleSubreddit(sub)}
-                      className="accent-[#4B6BF5] w-4 h-4 shrink-0"
-                    />
-                    <span className="text-sm text-gray-700 truncate">r/{sub}</span>
-                  </label>
-                ))
-              )}
-            </div>
-
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-xs text-gray-400">{selected.length} of {MAX_SELECTED} selected</p>
-              {maxError && <p className="text-xs text-red-500">Maximum 5 communities per report</p>}
-            </div>
+                    r/{sub}
+                  </button>
+                ))}
+              </div>
+            )}
 
             <div className="flex gap-2 mb-5">
               <input
@@ -233,7 +201,7 @@ export default function GenerateButton() {
               </button>
               <button
                 onClick={handleGenerate}
-                disabled={loading || selected.length === 0}
+                disabled={loading || !selectedSubreddit}
                 className="flex-1 bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] text-white rounded-lg py-3 text-sm font-semibold hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (
