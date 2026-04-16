@@ -63,10 +63,16 @@ export async function POST(req: NextRequest) {
       )
       if (redditCheck.ok) {
         const redditData = await redditCheck.json()
-        const postCount = (redditData?.data?.children?.length ?? 0) as number
-        if (postCount < 3) {
+        const posts = redditData?.data?.children ?? []
+        const postCount = posts.length as number
+        const now = Date.now() / 1000
+        const recentPosts = posts.filter(
+          (p: { data?: { created_utc?: number } }) =>
+            (p.data?.created_utc ?? 0) > now - 60 * 60 * 24 * 30
+        )
+        if (postCount < 5 || recentPosts.length === 0) {
           return NextResponse.json(
-            { error: `r/${subToScan} has very low activity. Try a larger subreddit like r/investing or r/personalfinance.` },
+            { error: `r/${subToScan} doesn't have enough recent activity to generate a useful report. Try r/investing, r/personalfinance, or r/wallstreetbets instead.` },
             { status: 400 }
           )
         }
