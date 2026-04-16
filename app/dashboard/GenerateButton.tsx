@@ -87,13 +87,9 @@ export default function GenerateButton() {
           audienceGoal: activeAudience?.goal ?? null,
         }),
       })
-      const data: { reportId?: string; error?: string } = await res.json()
+      const body: { reportId?: string; error?: string } = await res.json().catch(() => ({}))
       if (!res.ok) {
-        setError(
-          data.error === 'No credits remaining'
-            ? 'No credits remaining'
-            : data.error || 'Generation failed. Please try again.'
-        )
+        setError(body.error ?? 'Something went wrong. Please try again.')
         setLoading(false)
         return
       }

@@ -93,8 +93,19 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         )
       : []
 
-    // No hard-fail on empty posts — pass empty array to Claude for graceful degradation.
-    // Claude will return strategy_note + empty threads; report is marked complete with 0 threads.
+    // ── 6a. Hard-stop when Apify returned nothing — skip Claude entirely ──
+    if (scrapedPosts.length === 0) {
+      const subName = (reportCheck.selected_subreddits as string[] | null)?.[0] ?? 'this subreddit'
+      await db.from('reports').update({
+        status: 'complete',
+        strategy_note: `r/${subName} didn't return any posts this run. This usually means the community is low-activity or temporarily unavailable. Try a larger or more active subreddit next time.`,
+        subreddits_scanned: 0,
+        threads_found: 0,
+        high_priority_count: 0,
+      }).eq('id', params.id)
+      console.log(`[reports/analyze] Report ${params.id} complete — 0 posts from Apify, skipping Claude`)
+      return NextResponse.json({ ok: true, threads: 0 })
+    }
 
     // ── 6. Deduplicate: filter URLs seen this week ──
     const weekStart = new Date()
@@ -141,7 +152,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     // ── 7. Claude analysis ──
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 4000,
+      max_tokens: 8000,
       system: 'You are a Reddit engagement strategist helping a business build authentic presence in communities where their target audience already spends time. You understand that the best community engagement is never direct promotion — it\'s a knowledgeable person sharing genuine perspective that happens to reflect their experience and worldview.\n\nReturn ONLY valid JSON, no markdown, no code blocks.',
       messages: [
         {

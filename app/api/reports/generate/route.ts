@@ -55,6 +55,26 @@ export async function POST(req: NextRequest) {
     const maxPostCount = 15
     const maxItems = 35  // single subreddit: 15 posts + 20 buffer
 
+    // Pre-validate: check Reddit has posts before spending a credit
+    try {
+      const redditCheck = await fetch(
+        `https://www.reddit.com/r/${subToScan}/hot.json?limit=5`,
+        { headers: { 'User-Agent': 'NichePal/1.0' } }
+      )
+      if (redditCheck.ok) {
+        const redditData = await redditCheck.json()
+        const postCount = (redditData?.data?.children?.length ?? 0) as number
+        if (postCount < 3) {
+          return NextResponse.json(
+            { error: `r/${subToScan} has very low activity. Try a larger subreddit like r/investing or r/personalfinance.` },
+            { status: 400 }
+          )
+        }
+      }
+    } catch {
+      console.log('[generate] reddit pre-check failed, proceeding')
+    }
+
     // Create report row
     const db = createServiceClient()
     const { data: report, error: reportError } = await db
