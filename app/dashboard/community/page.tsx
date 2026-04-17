@@ -162,6 +162,11 @@ export default function CommunitySearchPage() {
 
                 {/* Add to audience — pinned to bottom */}
                 <div className="mt-auto">
+                  {added[result.name] && (
+                    <p className="text-xs text-green-600 mb-2">
+                      ✓ Added to {added[result.name]}
+                    </p>
+                  )}
                   <div className="flex items-center gap-2">
                     <select
                       value={selectedAudience[result.name] ?? ''}
@@ -185,13 +190,6 @@ export default function CommunitySearchPage() {
                       {adding[result.name] ? 'Adding...' : 'Add'}
                     </button>
                   </div>
-
-                  {/* Success state */}
-                  {added[result.name] && (
-                    <p className="text-xs text-green-600 mt-2">
-                      ✓ Added to {added[result.name]}
-                    </p>
-                  )}
                 </div>
               </div>
             ))}

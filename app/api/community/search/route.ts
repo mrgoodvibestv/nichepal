@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     // Check credits — community search costs 2
     const { data: profile } = await supabase
       .from('profiles')
-      .select('id, credits')
+      .select('id, credits, audiences')
       .eq('user_id', user.id)
       .single()
 
@@ -45,6 +45,14 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       )
     }
+
+    // Build set of subreddits the user already has across all audiences
+    const existingAudiences = (profile.audiences as Array<{ subreddits: string[] }> | null) ?? []
+    const existingSubreddits = new Set(
+      existingAudiences
+        .flatMap(a => a.subreddits ?? [])
+        .map(s => s.toLowerCase())
+    )
 
     // Deduct 2 credits upfront
     await deductCredit(profile.id, 'community_search')
@@ -76,7 +84,9 @@ Only include subreddits you are highly confident exist and are actively posting.
     const raw = message.content[0].type === 'text' ? message.content[0].text : '[]'
     const cleaned = raw.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim()
     const parsed: SubredditSuggestion[] = JSON.parse(cleaned)
-    const suggestions = Array.isArray(parsed) ? parsed.slice(0, 8) : []
+    const suggestions = Array.isArray(parsed)
+      ? parsed.filter(s => !existingSubreddits.has(s.name.toLowerCase())).slice(0, 8)
+      : []
 
     if (suggestions.length === 0) {
       return NextResponse.json({ results: [] })
