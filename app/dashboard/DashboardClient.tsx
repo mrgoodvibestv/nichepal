@@ -131,7 +131,7 @@ export default function DashboardClient({
           <div>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
               <div>
-                <h2 className="text-lg font-semibold text-black">Your Reports</h2>
+                <h1 className="text-2xl font-bold text-black">Your Reports</h1>
                 <p className="text-xs text-gray-400 mt-0.5">
                   {reports.length} {reports.length === 1 ? 'report' : 'reports'} · {totalThreads} threads found · {totalEngaged} engaged · {credits} credits remaining
                 </p>
