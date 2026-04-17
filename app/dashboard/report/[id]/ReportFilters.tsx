@@ -48,7 +48,7 @@ export default function ReportFilters({ threads }: { threads: Thread[] }) {
   return (
     <>
       {/* Filter bar */}
-      <div className="bg-white border-b border-gray-100 px-4 sm:px-8 py-3 flex flex-wrap items-center gap-2 sm:gap-4">
+      <div className="bg-white border-b border-gray-100 px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center gap-2 sm:gap-3">
         {/* Priority */}
         <div className="flex items-center gap-1.5">
           {PRIORITY_LABELS.map(p => (
@@ -58,7 +58,7 @@ export default function ReportFilters({ threads }: { threads: Thread[] }) {
           ))}
         </div>
 
-        <div className="h-4 w-px bg-gray-200" />
+        <div className="hidden sm:block h-4 w-px bg-gray-200" />
 
         {/* Thread type */}
         <div className="flex items-center gap-1.5">
@@ -69,7 +69,7 @@ export default function ReportFilters({ threads }: { threads: Thread[] }) {
           ))}
         </div>
 
-        <div className="h-4 w-px bg-gray-200" />
+        <div className="hidden sm:block h-4 w-px bg-gray-200" />
 
         {/* Subreddit dropdown */}
         <div className="relative">
@@ -91,11 +91,11 @@ export default function ReportFilters({ threads }: { threads: Thread[] }) {
           </div>
         </div>
 
-        <span className="ml-auto text-sm text-gray-400">{filtered.length} threads</span>
+        <span className="ml-auto text-sm text-gray-400 shrink-0">{filtered.length} threads</span>
       </div>
 
       {/* Thread list */}
-      <div className="px-4 sm:px-8 py-6 space-y-4">
+      <div className="px-4 sm:px-6 lg:px-8 py-6 space-y-4">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <p className="text-3xl mb-3">🔍</p>

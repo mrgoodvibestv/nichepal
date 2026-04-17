@@ -72,17 +72,17 @@ export default async function ReportPage({ params }: { params: { id: string } })
   return (
     <div>
       {/* Report header */}
-      <div className="bg-white border-b border-gray-100 px-4 sm:px-8 py-6">
+      <div className="bg-white border-b border-gray-100 px-4 sm:px-6 lg:px-8 py-5 sm:py-6">
         <Link
           href="/dashboard"
-          className="text-sm text-gray-500 hover:text-black transition mb-3 inline-block"
+          className="text-sm text-gray-500 hover:text-black transition mb-3 inline-block py-1"
         >
           ← Reports
         </Link>
 
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
           <div>
-            <h1 className="text-2xl font-bold text-black mb-0.5">
+            <h1 className="text-xl sm:text-2xl font-bold text-black mb-0.5 truncate" title={subredditTitle ? `r/${subredditTitle}` : 'Report'}>
               {subredditTitle ? `r/${subredditTitle}` : 'Report'}
             </h1>
             <p className="text-sm text-gray-400 mb-2">{formatDate(report.generated_at)}</p>
@@ -95,7 +95,7 @@ export default async function ReportPage({ params }: { params: { id: string } })
               <p className="text-sm text-gray-600 italic max-w-2xl">{report.strategy_note}</p>
             )}
           </div>
-          <p className="text-sm text-gray-500 shrink-0 ml-6 mt-1 flex flex-wrap gap-x-3 gap-y-1 justify-end">
+          <p className="text-sm text-gray-500 sm:shrink-0 sm:ml-6 sm:mt-1 flex flex-wrap gap-x-3 gap-y-1 sm:justify-end">
             <span>{report.subreddits_scanned} subreddits</span>
             <span>{report.threads_found} threads</span>
             <span>{report.high_priority_count} high priority</span>

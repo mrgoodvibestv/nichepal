@@ -105,7 +105,7 @@ export default function GenerateButton() {
     <>
       <button
         onClick={openModal}
-        className="rounded-lg px-6 py-3 font-semibold text-white bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] hover:opacity-90 transition"
+        className="w-full sm:w-auto rounded-lg px-6 py-3 font-semibold text-white bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] hover:opacity-90 transition"
       >
         Generate Report
       </button>

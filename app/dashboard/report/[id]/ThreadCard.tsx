@@ -149,7 +149,7 @@ export default function ThreadCard({
             </p>
             <button
               onClick={handleCopy}
-              className="text-xs text-[#4B6BF5] hover:opacity-75 transition font-medium"
+              className="text-xs text-[#4B6BF5] hover:opacity-75 transition font-medium p-2 -m-2"
             >
               {copied ? 'Copied!' : 'Copy'}
             </button>
@@ -161,12 +161,12 @@ export default function ThreadCard({
       )}
 
       {/* Bottom row */}
-      <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <Link
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm text-[#4B6BF5] font-medium hover:opacity-75 transition"
+          className="text-sm text-[#4B6BF5] font-medium hover:opacity-75 transition py-2.5 sm:py-0 text-center sm:text-left"
         >
           View thread →
         </Link>
@@ -175,8 +175,8 @@ export default function ThreadCard({
           onClick={handleEngage}
           className={
             isEngaged
-              ? 'bg-green-50 border border-green-200 text-green-700 rounded-lg px-3 py-1.5 text-sm transition'
-              : 'border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-600 hover:border-gray-300 transition'
+              ? 'bg-green-50 border border-green-200 text-green-700 rounded-lg px-3 py-2.5 text-sm transition w-full sm:w-auto min-h-[44px]'
+              : 'border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-600 hover:border-gray-300 transition w-full sm:w-auto min-h-[44px]'
           }
         >
           {isEngaged ? '✓ Engaged' : 'Mark as engaged'}
