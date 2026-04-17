@@ -96,7 +96,7 @@ export default function CommunitySearchPage() {
         </div>
 
         {/* Search bar */}
-        <div className="flex gap-3 mb-8 max-w-2xl">
+        <div className="flex gap-3 mb-2 max-w-2xl">
           <input
             type="text"
             value={query}
@@ -113,6 +113,7 @@ export default function CommunitySearchPage() {
             {loading ? 'Searching...' : 'Find Communities'}
           </button>
         </div>
+        <p className="text-xs text-gray-400 mt-2 mb-6">2 credits per search</p>
 
         {/* Loading state */}
         {loading && (

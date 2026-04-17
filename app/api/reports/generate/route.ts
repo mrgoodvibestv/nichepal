@@ -39,8 +39,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
 
-    if ((profile.credits ?? 0) < 1) {
-      return NextResponse.json({ error: 'No credits remaining' }, { status: 400 })
+    if ((profile.credits ?? 0) < 3) {
+      return NextResponse.json({ error: 'Not enough credits. Reports cost 3 credits.' }, { status: 400 })
     }
 
     const subToScan: string =
@@ -67,8 +67,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to create report' }, { status: 500 })
     }
 
-    // Deduct credit
-    await deductCredit(profile.id, 'Report generation')
+    // Deduct 3 credits
+    await deductCredit(profile.id, 'report_generation')
+    await deductCredit(profile.id, 'report_generation')
+    await deductCredit(profile.id, 'report_generation')
 
     // Start Apify — fire and save run IDs, return immediately
     const token = process.env.APIFY_API_TOKEN!

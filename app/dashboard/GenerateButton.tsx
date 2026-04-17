@@ -183,7 +183,8 @@ export default function GenerateButton() {
               </button>
             </div>
 
-            <p className="text-xs text-gray-400 mb-5 text-center">Estimated time: ~30 seconds</p>
+            <p className="text-xs text-gray-400 mb-3 text-center">Estimated time: ~30 seconds</p>
+            <p className="text-xs text-gray-400 text-center mb-5">3 credits per report</p>
 
             {error && <p className="text-sm text-red-500 mb-3 text-center">{error}</p>}
 
