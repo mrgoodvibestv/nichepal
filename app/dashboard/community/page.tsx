@@ -85,8 +85,8 @@ export default function CommunitySearchPage() {
   }
 
   return (
-    <div className="px-4 sm:px-8 py-6 sm:py-8">
-      <div className="max-w-3xl">
+    <div className="px-4 sm:px-6 lg:px-8 py-6">
+      <div>
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-black">Community Search</h1>
@@ -120,7 +120,7 @@ export default function CommunitySearchPage() {
             <p className="text-sm text-gray-500 mb-4 animate-pulse">
               Discovering communities and verifying activity...
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3, 4].map(i => (
                 <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 animate-pulse">
                   <div className="h-4 bg-gray-100 rounded w-1/3 mb-2" />
@@ -141,7 +141,7 @@ export default function CommunitySearchPage() {
 
         {/* Results */}
         {!loading && results.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {results.map(result => (
               <div key={result.name} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 {/* Top row */}

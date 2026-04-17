@@ -149,11 +149,21 @@ Only include subreddits you are highly confident exist and are actively posting.
         )
       : []
 
-    // Step 5: Count posts and sample titles per subreddit
+    // Debug: log first item shape to understand Apify field names
+    if (Array.isArray(allItems) && allItems.length > 0) {
+      console.log('[community/search] sample item fields:', JSON.stringify(allItems[0]).slice(0, 300))
+    }
+
+    // Step 5: Count posts and sample titles per subreddit (case-insensitive)
     const postsBySubreddit = new Map<string, string[]>()
     for (const p of posts) {
       const post = p as Record<string, unknown>
-      const sub = ((post.subreddit as string) || '').toLowerCase()
+      // Apify may return communityName or subreddit — check both, case-insensitive
+      const sub = (
+        (post.communityName as string) ||
+        (post.subreddit as string) ||
+        ''
+      ).toLowerCase()
       const title = (post.title as string) || ''
       if (!sub) continue
       if (!postsBySubreddit.has(sub)) postsBySubreddit.set(sub, [])
@@ -161,6 +171,11 @@ Only include subreddits you are highly confident exist and are actively posting.
     }
 
     // Step 6: Build sorted results
+    console.log('[community/search] post counts:', suggestions.map(s => ({
+      name: s.name,
+      count: postsBySubreddit.get(s.name.toLowerCase())?.length ?? 0,
+    })))
+
     const results = suggestions
       .map(s => {
         const titles = postsBySubreddit.get(s.name.toLowerCase()) ?? []
