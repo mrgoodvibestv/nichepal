@@ -24,30 +24,6 @@ async function fetchWebsiteContent(url: string): Promise<string | null> {
   }
 }
 
-async function isSubredditActive(sub: string): Promise<boolean> {
-  try {
-    const res = await fetch(
-      `https://www.reddit.com/r/${sub}/hot.json?limit=5`,
-      {
-        headers: { 'User-Agent': 'NichePal/1.0' },
-        signal: AbortSignal.timeout(3000),
-      }
-    )
-    if (!res.ok) return false
-    const data = await res.json()
-    const posts = data?.data?.children ?? []
-    if (posts.length < 3) return false
-    const now = Date.now() / 1000
-    const recentPosts = posts.filter(
-      (p: { data?: { created_utc?: number } }) =>
-        (p.data?.created_utc ?? 0) > now - 60 * 60 * 24 * 30
-    )
-    return recentPosts.length >= 1
-  } catch {
-    return true // on error, give benefit of the doubt
-  }
-}
-
 export async function POST(req: NextRequest) {
   try {
     const { url } = await req.json()
@@ -116,33 +92,7 @@ ${content}`,
     const cleaned = raw.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim()
     const data = JSON.parse(cleaned)
 
-    // Validate subreddit activity in parallel — strip dead/invented communities
-    const audiences = (data.audiences ?? []) as {
-      id: string
-      name: string
-      description: string
-      goal: string
-      subreddits: string[]
-    }[]
-
-    const validatedAudiences = await Promise.all(
-      audiences.map(async aud => {
-        const results = await Promise.all(
-          aud.subreddits.map(async (sub: string) => ({
-            sub,
-            active: await isSubredditActive(sub),
-          }))
-        )
-        const activeSubs = results.filter(r => r.active).map(r => r.sub)
-        console.log(
-          `[scan] "${aud.name}": ${aud.subreddits.length} suggested,`,
-          `${activeSubs.length} active:`, activeSubs
-        )
-        return { ...aud, subreddits: activeSubs }
-      })
-    )
-
-    return NextResponse.json({ ...data, audiences: validatedAudiences })
+    return NextResponse.json(data)
   } catch (err: unknown) {
     console.error('[onboard/scan]', err)
     return NextResponse.json({ error: 'Scan failed. Please try again.' }, { status: 500 })

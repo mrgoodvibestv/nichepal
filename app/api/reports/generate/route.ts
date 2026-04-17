@@ -48,38 +48,12 @@ export async function POST(req: NextRequest) {
       (profile.target_subreddits as string[] | null ?? [])[0] ||
       ''
 
-    if (!subToScan) {
+    if (!subToScan || subToScan.length < 2) {
       return NextResponse.json({ error: 'No subreddit specified' }, { status: 400 })
     }
 
     const maxPostCount = 15
     const maxItems = 35  // single subreddit: 15 posts + 20 buffer
-
-    // Pre-validate: check Reddit has posts before spending a credit
-    try {
-      const redditCheck = await fetch(
-        `https://www.reddit.com/r/${subToScan}/hot.json?limit=5`,
-        { headers: { 'User-Agent': 'NichePal/1.0' } }
-      )
-      if (redditCheck.ok) {
-        const redditData = await redditCheck.json()
-        const posts = redditData?.data?.children ?? []
-        const postCount = posts.length as number
-        const now = Date.now() / 1000
-        const recentPosts = posts.filter(
-          (p: { data?: { created_utc?: number } }) =>
-            (p.data?.created_utc ?? 0) > now - 60 * 60 * 24 * 30
-        )
-        if (postCount < 5 || recentPosts.length === 0) {
-          return NextResponse.json(
-            { error: `r/${subToScan} doesn't have enough recent activity to generate a useful report. Try r/investing, r/personalfinance, or r/wallstreetbets instead.` },
-            { status: 400 }
-          )
-        }
-      }
-    } catch {
-      console.log('[generate] reddit pre-check failed, proceeding')
-    }
 
     // Create report row
     const db = createServiceClient()
