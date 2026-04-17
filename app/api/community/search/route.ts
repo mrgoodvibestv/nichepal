@@ -5,6 +5,21 @@ import { deductCredit } from '@/lib/credits'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
+// Sanitize common Claude JSON issues: smart quotes + unescaped double quotes in string values
+function sanitizeJson(str: string): string {
+  str = str
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/[\u2018\u2019]/g, "'")
+  str = str.replace(
+    /("(?:title|body_snippet|comment_template|why_engage|strategy_note|author|subreddit|url|posted_at|thread_type|priority)":\s*")([\s\S]*?)("(?:\s*[,}]))/g,
+    (_match, prefix, content, suffix) => {
+      const escaped = content.replace(/(?<!\\)"/g, '\\"')
+      return prefix + escaped + suffix
+    }
+  )
+  return str
+}
+
 type SubredditSuggestion = {
   name: string
   reason: string
@@ -83,7 +98,15 @@ Only include subreddits you are highly confident exist and are actively posting.
 
     const raw = message.content[0].type === 'text' ? message.content[0].text : '[]'
     const cleaned = raw.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim()
-    const parsed: SubredditSuggestion[] = JSON.parse(cleaned)
+    let parsed: SubredditSuggestion[] = []
+    try {
+      const sanitized = sanitizeJson(cleaned)
+      parsed = JSON.parse(sanitized)
+    } catch (err) {
+      console.error('[community/search] claude raw response:', raw)
+      console.error('[community/search] json parse error:', err)
+      return NextResponse.json({ results: [] })
+    }
     const suggestions = Array.isArray(parsed)
       ? parsed.filter(s => !existingSubreddits.has(s.name.toLowerCase())).slice(0, 8)
       : []
