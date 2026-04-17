@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
+import { deductCredit } from '@/lib/credits'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -27,6 +28,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Query required' }, { status: 400 })
     }
 
+    // Check credits — community search costs 2
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id, credits')
+      .eq('user_id', user.id)
+      .single()
+
+    if (!profile) {
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+    }
+
+    if ((profile.credits ?? 0) < 2) {
+      return NextResponse.json(
+        { error: 'Not enough credits. Community search costs 2 credits.' },
+        { status: 400 }
+      )
+    }
+
+    // Deduct 2 credits upfront
+    await deductCredit(profile.id, 'community_search')
+    await deductCredit(profile.id, 'community_search')
+
     // Step 1: Claude suggests subreddits
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
@@ -52,9 +75,10 @@ Only include subreddits you are highly confident exist and are actively posting.
 
     const raw = message.content[0].type === 'text' ? message.content[0].text : '[]'
     const cleaned = raw.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim()
-    const suggestions: SubredditSuggestion[] = JSON.parse(cleaned)
+    const parsed: SubredditSuggestion[] = JSON.parse(cleaned)
+    const suggestions = Array.isArray(parsed) ? parsed.slice(0, 8) : []
 
-    if (!Array.isArray(suggestions) || suggestions.length === 0) {
+    if (suggestions.length === 0) {
       return NextResponse.json({ results: [] })
     }
 

@@ -145,25 +145,11 @@ export default function CommunitySearchPage() {
             {results.map(result => (
               <div key={result.name} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 {/* Top row */}
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <h3 className="font-semibold text-black">r/{result.name}</h3>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {result.estimated_size} community
-                      {result.active
-                        ? ` · ${result.post_count} recent posts found`
-                        : ' · low activity detected'}
-                    </p>
-                  </div>
-                  {result.active ? (
-                    <span className="text-xs bg-green-50 text-green-600 border border-green-200 rounded-full px-2 py-0.5 shrink-0">
-                      Active
-                    </span>
-                  ) : (
-                    <span className="text-xs bg-gray-50 text-gray-400 border border-gray-200 rounded-full px-2 py-0.5 shrink-0">
-                      Low activity
-                    </span>
-                  )}
+                <div className="mb-3">
+                  <h3 className="font-semibold text-black">r/{result.name}</h3>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {result.estimated_size} community
+                  </p>
                 </div>
 
                 {/* Reason */}
