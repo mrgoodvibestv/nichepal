@@ -148,7 +148,7 @@ export default function Sidebar({ credits, isOpen = false, onClose }: SidebarPro
           <NavItem
             href="/dashboard/community"
             icon={<SearchIcon />}
-            label="Community Search"
+            label="Discover"
             isActive={pathname === '/dashboard/community'}
             onClick={onClose}
           />

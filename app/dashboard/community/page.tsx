@@ -89,26 +89,26 @@ export default function CommunitySearchPage() {
       <div>
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-black">Community Search</h1>
+          <h1 className="text-2xl font-bold text-black">Discover</h1>
           <p className="text-sm text-gray-500 mt-1">
             Find active Reddit communities for any topic. Add them directly to your audiences.
           </p>
         </div>
 
         {/* Search bar */}
-        <div className="flex gap-3 mb-8">
+        <div className="flex gap-3 mb-8 max-w-2xl">
           <input
             type="text"
             value={query}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSearch()}
             placeholder="e.g. indie film funding, retail investing, AI side projects..."
-            className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4B6BF5] focus:border-transparent"
+            className="flex-1 min-w-0 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#4B6BF5] focus:border-transparent"
           />
           <button
             onClick={handleSearch}
             disabled={loading || !query.trim()}
-            className="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
+            className="shrink-0 px-5 py-3 rounded-xl font-semibold text-white text-sm bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
           >
             {loading ? 'Searching...' : 'Find Communities'}
           </button>
@@ -136,14 +136,16 @@ export default function CommunitySearchPage() {
 
         {/* Error */}
         {error && !loading && (
-          <p className="text-sm text-red-500 mb-4">{error}</p>
+          <div className="text-center py-8 px-4">
+            <p className="text-sm text-red-500">{error}</p>
+          </div>
         )}
 
         {/* Results */}
         {!loading && results.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {results.map(result => (
-              <div key={result.name} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col h-[220px]">
+              <div key={result.name} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col h-auto sm:h-[220px]">
                 {/* Top row */}
                 <div className="mb-3">
                   <h3 className="font-semibold text-black">r/{result.name}</h3>
