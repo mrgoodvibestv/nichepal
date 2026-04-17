@@ -105,7 +105,7 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="px-4 sm:px-8 py-6 sm:py-8">
-        <div className="max-w-2xl space-y-4 animate-pulse">
+        <div className="space-y-4 animate-pulse">
           <div className="h-6 bg-gray-100 rounded w-1/4" />
           <div className="h-10 bg-gray-100 rounded" />
           <div className="h-10 bg-gray-100 rounded" />
@@ -117,7 +117,7 @@ export default function SettingsPage() {
 
   return (
     <div className="px-4 sm:px-8 py-6 sm:py-8">
-      <div className="max-w-2xl">
+      <div>
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-black mb-1">Settings</h1>
           <p className="text-sm text-gray-500">
