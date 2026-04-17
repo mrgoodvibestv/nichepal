@@ -5,6 +5,21 @@ import { createServiceClient } from '@/lib/supabase/service'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
+// Sanitize common Claude JSON issues: smart quotes + unescaped double quotes in string values
+function sanitizeJson(str: string): string {
+  str = str
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/[\u2018\u2019]/g, "'")
+  str = str.replace(
+    /("(?:title|body_snippet|comment_template|why_engage|strategy_note|author|subreddit|url|posted_at|thread_type|priority)":\s*")([\s\S]*?)("(?:\s*[,}]))/g,
+    (_match, prefix, content, suffix) => {
+      const escaped = content.replace(/(?<!\\)"/g, '\\"')
+      return prefix + escaped + suffix
+    }
+  )
+  return str
+}
+
 type Thread = {
   subreddit: string
   title: string
@@ -254,11 +269,14 @@ ${JSON.stringify(postsToAnalyze.slice(0, 40))}`,
     // ── 8. Parse Claude response ──
     const raw = message.content[0].type === 'text' ? message.content[0].text : ''
     const cleaned = raw.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim()
+
+    const sanitized = sanitizeJson(cleaned)
     let parsed: { strategy_note: string; threads: Thread[] }
     try {
-      parsed = JSON.parse(cleaned)
+      parsed = JSON.parse(sanitized)
     } catch (parseErr) {
       console.error('[analyze] claude raw response:', raw)
+      console.error('[analyze] sanitized:', sanitized)
       console.error('[analyze] json parse error:', parseErr)
       throw parseErr
     }
