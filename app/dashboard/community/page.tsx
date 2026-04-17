@@ -143,7 +143,7 @@ export default function CommunitySearchPage() {
         {!loading && results.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {results.map(result => (
-              <div key={result.name} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <div key={result.name} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col h-[220px]">
                 {/* Top row */}
                 <div className="mb-3">
                   <h3 className="font-semibold text-black">r/{result.name}</h3>
@@ -153,48 +153,46 @@ export default function CommunitySearchPage() {
                 </div>
 
                 {/* Reason */}
-                <p className="text-sm text-gray-600 mb-3">{result.reason}</p>
+                <p
+                  className="text-sm text-gray-600 mb-3 line-clamp-3 cursor-default"
+                  title={result.reason}
+                >
+                  {result.reason}
+                </p>
 
-                {/* Sample titles */}
-                {result.sample_titles.length > 0 && (
-                  <div className="mb-4 space-y-1">
-                    {result.sample_titles.map((title, i) => (
-                      <p key={i} className="text-xs text-gray-400 truncate">· {title}</p>
-                    ))}
+                {/* Add to audience — pinned to bottom */}
+                <div className="mt-auto">
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={selectedAudience[result.name] ?? ''}
+                      onChange={e =>
+                        setSelectedAudience(prev => ({ ...prev, [result.name]: e.target.value }))
+                      }
+                      className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#4B6BF5] bg-white appearance-none"
+                    >
+                      <option value="">Add to audience...</option>
+                      {audiences.map(aud => (
+                        <option key={aud.id} value={aud.id}>
+                          {aud.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => handleAdd(result.name)}
+                      disabled={!selectedAudience[result.name] || adding[result.name]}
+                      className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+                    >
+                      {adding[result.name] ? 'Adding...' : 'Add'}
+                    </button>
                   </div>
-                )}
 
-                {/* Add to audience */}
-                <div className="flex items-center gap-2">
-                  <select
-                    value={selectedAudience[result.name] ?? ''}
-                    onChange={e =>
-                      setSelectedAudience(prev => ({ ...prev, [result.name]: e.target.value }))
-                    }
-                    className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#4B6BF5] bg-white appearance-none"
-                  >
-                    <option value="">Add to audience...</option>
-                    {audiences.map(aud => (
-                      <option key={aud.id} value={aud.id}>
-                        {aud.name}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={() => handleAdd(result.name)}
-                    disabled={!selectedAudience[result.name] || adding[result.name]}
-                    className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
-                  >
-                    {adding[result.name] ? 'Adding...' : 'Add'}
-                  </button>
+                  {/* Success state */}
+                  {added[result.name] && (
+                    <p className="text-xs text-green-600 mt-2">
+                      ✓ Added to {added[result.name]}
+                    </p>
+                  )}
                 </div>
-
-                {/* Success state */}
-                {added[result.name] && (
-                  <p className="text-xs text-green-600 mt-2">
-                    ✓ Added to {added[result.name]}
-                  </p>
-                )}
               </div>
             ))}
           </div>
