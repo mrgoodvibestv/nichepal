@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     }
 
     const maxPostCount = 15
-    const maxItems = 50  // single subreddit with extra buffer
+    const maxItems = 75  // single subreddit with extra buffer
 
     // Create report row
     const db = createServiceClient()
@@ -74,6 +74,7 @@ export async function POST(req: NextRequest) {
     const token = process.env.APIFY_API_TOKEN!
     const apifyInput = {
       startUrls: [{ url: `https://www.reddit.com/r/${subToScan}/` }],
+      subreddits: [subToScan],
       maxItems,
       maxPostCount,
       skipComments: true,
