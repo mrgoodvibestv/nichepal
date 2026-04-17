@@ -96,7 +96,7 @@ export default async function ReportPage({ params }: { params: { id: string } })
             )}
           </div>
           <p className="text-sm text-gray-500 sm:shrink-0 sm:ml-6 sm:mt-1 flex flex-wrap gap-x-3 gap-y-1 sm:justify-end">
-            <span>{report.subreddits_scanned} subreddits</span>
+            <span>{report.subreddits_scanned} {report.subreddits_scanned === 1 ? 'subreddit' : 'subreddits'}</span>
             <span>{report.threads_found} threads</span>
             <span>{report.high_priority_count} high priority</span>
           </p>

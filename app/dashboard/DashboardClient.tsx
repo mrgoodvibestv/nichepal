@@ -166,7 +166,7 @@ export default function DashboardClient({
                   </div>
 
                   <p className="text-sm text-gray-500 mb-2">
-                    {report.subreddits_scanned} subreddits · {report.threads_found} threads ·{' '}
+                    {report.subreddits_scanned} {report.subreddits_scanned === 1 ? 'subreddit' : 'subreddits'} · {report.threads_found} threads ·{' '}
                     {report.high_priority_count} high priority
                   </p>
 
