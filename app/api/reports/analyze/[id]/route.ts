@@ -137,9 +137,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     })
     const postsToAnalyze = freshPosts.length > 0 ? freshPosts : scrapedPosts
 
-    // Tier-based thread cap: growth users get more output from Claude
+    // Fixed thread cap — short comment_templates keep output well under 4000 tokens
     const selectedSubs = (reportCheck.selected_subreddits as string[] | null) ?? []
-    const maxThreads = (profile.package as string) === 'growth' ? 15 : 9
+    const maxThreads = 5
 
     // Build audience context block if this report has a targeted audience
     const audienceName = (reportCheck.audience_name as string | null) ?? ''
@@ -152,7 +152,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     // ── 7. Claude analysis ──
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 8000,
+      max_tokens: 4000,
       system: 'You are a Reddit engagement strategist helping a business build authentic presence in communities where their target audience already spends time. You understand that the best community engagement is never direct promotion — it\'s a knowledgeable person sharing genuine perspective that happens to reflect their experience and worldview.\n\nReturn ONLY valid JSON, no markdown, no code blocks.',
       messages: [
         {
@@ -182,7 +182,7 @@ ${audienceName
 
 FIELD NOTES:
 - why_engage: explain the INDIRECT angle — why this thread, what persona, what unique value
-- comment_template: write as a knowledgeable practitioner — no brand mentions, no CTAs, sounds like a real person
+- comment_template: 2-3 sentences MAX as a knowledgeable practitioner — no brand mentions, no CTAs, sounds like a real person. Keep it concise and punchy, not a paragraph.
 - body_snippet: first 150 chars of post body, or empty string
 - thread_type values: trending (posted <48hrs and >50 upvotes), rising (gaining traction), evergreen (always relevant)
 - priority values: high (engage within 24 hours), medium (engage this week)
