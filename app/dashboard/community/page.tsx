@@ -96,7 +96,7 @@ export default function CommunitySearchPage() {
         </div>
 
         {/* Search bar */}
-        <div className="flex gap-3 mb-2 max-w-2xl">
+        <div className="flex gap-3 mb-2">
           <input
             type="text"
             value={query}
