@@ -131,11 +131,41 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       ;(seenThreads ?? []).forEach(t => seenUrls.add(t.url as string))
     }
 
+    // Also filter out threads the user has already engaged with in the last 30 days
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+    const { data: recentReports } = await db
+      .from('reports')
+      .select('id')
+      .eq('profile_id', profileId)
+      .gte('generated_at', thirtyDaysAgo.toISOString())
+
+    const recentReportIds = (recentReports ?? []).map(r => r.id)
+    const engagedUrls = new Set<string>()
+
+    if (recentReportIds.length > 0) {
+      const { data: engagedThreads } = await db
+        .from('threads')
+        .select('url')
+        .in('report_id', recentReportIds)
+        .eq('engaged', true)
+      ;(engagedThreads ?? []).forEach(t => engagedUrls.add(t.url as string))
+    }
+
     const freshPosts = scrapedPosts.filter((p: unknown) => {
       const post = p as Record<string, unknown>
-      return post.url && !seenUrls.has(post.url as string)
+      const url = post.url as string
+      return url && !seenUrls.has(url) && !engagedUrls.has(url)
     })
     const postsToAnalyze = freshPosts.length > 0 ? freshPosts : scrapedPosts
+
+    console.log('[analyze] dedup:', {
+      total: scrapedPosts.length,
+      afterWeekDedup: scrapedPosts.filter(p => !seenUrls.has((p as Record<string, unknown>).url as string)).length,
+      afterEngagedDedup: freshPosts.length,
+      engagedUrlsFiltered: engagedUrls.size,
+    })
 
     // Fixed thread cap — short comment_templates keep output well under 4000 tokens
     const selectedSubs = (reportCheck.selected_subreddits as string[] | null) ?? []

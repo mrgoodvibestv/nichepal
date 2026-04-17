@@ -35,10 +35,20 @@ export default async function DashboardPage() {
     .eq('profile_id', profile?.id)
     .order('generated_at', { ascending: false })
 
+  const reportIds = (reports ?? []).map(r => r.id)
+  const { data: threadStats } = reportIds.length > 0
+    ? await supabase
+        .from('threads')
+        .select('id, engaged')
+        .in('report_id', reportIds)
+    : { data: [] }
+
   return (
     <DashboardClient
       reports={(reports ?? []) as Report[]}
       credits={profile?.credits ?? 0}
+      totalThreads={threadStats?.length ?? 0}
+      totalEngaged={threadStats?.filter(t => t.engaged).length ?? 0}
     />
   )
 }

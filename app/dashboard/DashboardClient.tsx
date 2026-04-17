@@ -54,9 +54,13 @@ function StatusBadge({ status }: { status: Report['status'] }) {
 export default function DashboardClient({
   reports,
   credits,
+  totalThreads,
+  totalEngaged,
 }: {
   reports: Report[]
   credits: number
+  totalThreads: number
+  totalEngaged: number
 }) {
   const router = useRouter()
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -129,7 +133,7 @@ export default function DashboardClient({
               <div>
                 <h2 className="text-lg font-semibold text-black">Your Reports</h2>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  {reports.length} reports · {credits} credits remaining
+                  {reports.length} {reports.length === 1 ? 'report' : 'reports'} · {totalThreads} threads found · {totalEngaged} engaged · {credits} credits remaining
                 </p>
               </div>
               <GenerateButton />
