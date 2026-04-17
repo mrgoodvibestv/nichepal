@@ -14,6 +14,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const body = await req.json()
     const {
       url,
       business_name,
@@ -21,29 +22,32 @@ export async function POST(req: NextRequest) {
       keywords,
       tone,
       audiences,
+      target_subreddits: rawTargetSubreddits,
       package: pkg,
-    } = await req.json()
+    } = body
 
-    // Derive target_subreddits from audiences (flat union — backwards compat)
-    const target_subreddits = (audiences ?? []).flatMap(
-      (a: { subreddits: string[] }) => a.subreddits ?? []
-    )
+    const upsertData: Record<string, unknown> = {
+      user_id: user.id,
+      url,
+      business_name,
+      positioning,
+      keywords,
+      tone,
+      onboarded: true,
+    }
 
-    const { error } = await supabase.from('profiles').upsert(
-      {
-        user_id: user.id,
-        url,
-        business_name,
-        positioning,
-        keywords,
-        target_subreddits,
-        tone,
-        audiences: audiences ?? [],
-        ...(pkg !== undefined && { package: pkg }),
-        onboarded: true,
-      },
-      { onConflict: 'user_id' }
-    )
+    if (audiences !== undefined) {
+      upsertData.audiences = audiences
+      upsertData.target_subreddits = (audiences as Array<{ subreddits?: string[] }>).flatMap(
+        a => a.subreddits ?? []
+      )
+    } else if (rawTargetSubreddits !== undefined) {
+      upsertData.target_subreddits = rawTargetSubreddits
+    }
+
+    if (pkg !== undefined) upsertData.package = pkg
+
+    const { error } = await supabase.from('profiles').upsert(upsertData, { onConflict: 'user_id' })
 
     if (error) {
       console.error('[profile/save]', error)

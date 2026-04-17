@@ -2,6 +2,14 @@
 
 import { useState, useEffect, useRef } from 'react'
 
+type Audience = {
+  id: string
+  name: string
+  description: string
+  goal: string
+  subreddits: string[]
+}
+
 type Profile = {
   business_name: string | null
   url: string | null
@@ -9,6 +17,7 @@ type Profile = {
   keywords: string[]
   target_subreddits: string[]
   tone: string
+  audiences: Audience[]
 }
 
 const TONE_OPTIONS = [
@@ -17,6 +26,121 @@ const TONE_OPTIONS = [
   { label: 'Challenger', value: 'challenger' },
   { label: 'Storyteller', value: 'storyteller' },
 ]
+
+function generateId() {
+  return Math.random().toString(36).slice(2, 10)
+}
+
+function AudienceCard({
+  audience,
+  onChange,
+  onDelete,
+}: {
+  audience: Audience
+  onChange: (updated: Audience) => void
+  onDelete: () => void
+}) {
+  const [addingSub, setAddingSub] = useState(false)
+  const [newSub, setNewSub] = useState('')
+  const subRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (addingSub) subRef.current?.focus()
+  }, [addingSub])
+
+  function commitSub() {
+    const sub = newSub.trim().replace(/^r\//, '')
+    if (sub && !audience.subreddits.includes(sub)) {
+      onChange({ ...audience, subreddits: [...audience.subreddits, sub] })
+    }
+    setNewSub('')
+    setAddingSub(false)
+  }
+
+  return (
+    <div className="border border-gray-200 rounded-xl p-4 space-y-3 bg-white">
+      <div className="flex items-start justify-between gap-2">
+        <input
+          type="text"
+          value={audience.name}
+          onChange={e => onChange({ ...audience, name: e.target.value })}
+          placeholder="Audience name"
+          className="flex-1 font-medium text-sm text-black border-0 border-b border-gray-200 focus:outline-none focus:border-[#4B6BF5] pb-0.5 bg-transparent"
+        />
+        <button
+          type="button"
+          onClick={onDelete}
+          className="text-gray-300 hover:text-red-400 transition text-lg leading-none mt-0.5"
+          aria-label="Delete audience"
+        >
+          ×
+        </button>
+      </div>
+
+      <input
+        type="text"
+        value={audience.description}
+        onChange={e => onChange({ ...audience, description: e.target.value })}
+        placeholder="Description (who they are)"
+        className="w-full text-sm text-gray-600 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B6BF5] bg-white"
+      />
+
+      <input
+        type="text"
+        value={audience.goal}
+        onChange={e => onChange({ ...audience, goal: e.target.value })}
+        placeholder="Goal (what you want from this audience)"
+        className="w-full text-sm text-gray-600 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#4B6BF5] bg-white"
+      />
+
+      <div>
+        <p className="text-xs font-medium text-gray-500 mb-1.5">Subreddits</p>
+        <div className="flex flex-wrap gap-1.5">
+          {audience.subreddits.map(sub => (
+            <span
+              key={sub}
+              className="bg-gray-50 border border-gray-200 rounded-full px-2.5 py-1 text-xs flex items-center gap-1"
+            >
+              r/{sub}
+              <button
+                type="button"
+                onClick={() =>
+                  onChange({ ...audience, subreddits: audience.subreddits.filter(s => s !== sub) })
+                }
+                className="text-gray-400 hover:text-gray-600 leading-none"
+              >
+                ×
+              </button>
+            </span>
+          ))}
+          {addingSub ? (
+            <input
+              ref={subRef}
+              type="text"
+              value={newSub}
+              onChange={e => setNewSub(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') { e.preventDefault(); commitSub() }
+                if (e.key === 'Escape') { setAddingSub(false); setNewSub('') }
+              }}
+              onBlur={commitSub}
+              placeholder="subreddit"
+              className="bg-gray-50 border border-dashed border-[#4B6BF5] rounded-full px-2.5 py-1 text-xs text-[#4B6BF5] focus:outline-none w-28"
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setAddingSub(true)}
+              className="bg-gray-50 border border-dashed border-gray-300 rounded-full px-2.5 py-1 text-xs text-[#4B6BF5] hover:border-[#4B6BF5] transition"
+            >
+              + Add
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
@@ -28,15 +152,12 @@ export default function SettingsPage() {
   const [url, setUrl] = useState('')
   const [positioning, setPositioning] = useState('')
   const [keywords, setKeywords] = useState<string[]>([])
-  const [subreddits, setSubreddits] = useState<string[]>([])
   const [tone, setTone] = useState('peer-to-peer')
+  const [audiences, setAudiences] = useState<Audience[]>([])
 
   const [addingKeyword, setAddingKeyword] = useState(false)
   const [newKeyword, setNewKeyword] = useState('')
-  const [addingSubreddit, setAddingSubreddit] = useState(false)
-  const [newSubreddit, setNewSubreddit] = useState('')
   const newKeywordRef = useRef<HTMLInputElement>(null)
-  const newSubredditRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     fetch('/api/profile')
@@ -46,8 +167,8 @@ export default function SettingsPage() {
         setUrl(data.url ?? '')
         setPositioning(data.positioning ?? '')
         setKeywords(data.keywords ?? [])
-        setSubreddits(data.target_subreddits ?? [])
         setTone(data.tone ?? 'peer-to-peer')
+        setAudiences(data.audiences ?? [])
       })
       .catch(() => setError('Failed to load profile'))
       .finally(() => setLoading(false))
@@ -56,9 +177,6 @@ export default function SettingsPage() {
   useEffect(() => {
     if (addingKeyword) newKeywordRef.current?.focus()
   }, [addingKeyword])
-  useEffect(() => {
-    if (addingSubreddit) newSubredditRef.current?.focus()
-  }, [addingSubreddit])
 
   function commitKeyword() {
     const kw = newKeyword.trim()
@@ -67,11 +185,19 @@ export default function SettingsPage() {
     setAddingKeyword(false)
   }
 
-  function commitSubreddit() {
-    const sub = newSubreddit.trim().replace(/^r\//, '')
-    if (sub && !subreddits.includes(sub)) setSubreddits(prev => [...prev, sub])
-    setNewSubreddit('')
-    setAddingSubreddit(false)
+  function updateAudience(id: string, updated: Audience) {
+    setAudiences(prev => prev.map(a => (a.id === id ? updated : a)))
+  }
+
+  function deleteAudience(id: string) {
+    setAudiences(prev => prev.filter(a => a.id !== id))
+  }
+
+  function addAudience() {
+    setAudiences(prev => [
+      ...prev,
+      { id: generateId(), name: '', description: '', goal: '', subreddits: [] },
+    ])
   }
 
   async function handleSave() {
@@ -87,8 +213,8 @@ export default function SettingsPage() {
           business_name: businessName,
           positioning,
           keywords,
-          target_subreddits: subreddits,
           tone,
+          audiences,
         }),
       })
       const data: { success?: boolean; error?: string } = await res.json()
@@ -205,51 +331,32 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Target communities */}
+          {/* Audiences */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Target communities
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {subreddits.map(sub => (
-                <span
-                  key={sub}
-                  className="bg-gray-50 border border-gray-200 rounded-full px-3 py-1.5 text-sm flex items-center gap-1.5"
-                >
-                  r/{sub}
-                  <button
-                    type="button"
-                    onClick={() => setSubreddits(prev => prev.filter(s => s !== sub))}
-                    className="text-gray-400 hover:text-gray-600 text-xs ml-1 leading-none"
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-              {addingSubreddit ? (
-                <input
-                  ref={newSubredditRef}
-                  type="text"
-                  value={newSubreddit}
-                  onChange={e => setNewSubreddit(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') { e.preventDefault(); commitSubreddit() }
-                    if (e.key === 'Escape') { setAddingSubreddit(false); setNewSubreddit('') }
-                  }}
-                  onBlur={commitSubreddit}
-                  placeholder="subreddit name"
-                  className="bg-gray-50 border border-dashed border-[#4B6BF5] rounded-full px-3 py-1.5 text-sm text-[#4B6BF5] focus:outline-none w-36"
-                />
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setAddingSubreddit(true)}
-                  className="bg-gray-50 border border-dashed border-gray-300 rounded-full px-3 py-1.5 text-sm text-[#4B6BF5] hover:border-[#4B6BF5] transition"
-                >
-                  + Add
-                </button>
-              )}
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">Audiences</label>
+              <button
+                type="button"
+                onClick={addAudience}
+                className="text-xs text-[#4B6BF5] font-medium hover:opacity-80 transition"
+              >
+                + New audience
+              </button>
             </div>
+            {audiences.length === 0 ? (
+              <p className="text-sm text-gray-400 py-3">No audiences yet. Add one above.</p>
+            ) : (
+              <div className="space-y-3">
+                {audiences.map(aud => (
+                  <AudienceCard
+                    key={aud.id}
+                    audience={aud}
+                    onChange={updated => updateAudience(aud.id, updated)}
+                    onDelete={() => deleteAudience(aud.id)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Tone */}
