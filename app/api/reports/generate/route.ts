@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     }
 
     const maxPostCount = 15
-    const maxItems = 35  // single subreddit: 15 posts + 20 buffer
+    const maxItems = 50  // single subreddit with extra buffer
 
     // Create report row
     const db = createServiceClient()
@@ -72,20 +72,22 @@ export async function POST(req: NextRequest) {
 
     // Start Apify — fire and save run IDs, return immediately
     const token = process.env.APIFY_API_TOKEN!
+    const apifyInput = {
+      startUrls: [{ url: `https://www.reddit.com/r/${subToScan}/` }],
+      maxItems,
+      maxPostCount,
+      skipComments: true,
+      sort: 'hot',
+      minScore: 1,
+      proxy: { useApifyProxy: true },
+    }
+    console.log('[generate] apify input:', JSON.stringify(apifyInput))
     const apifyRes = await fetch(
       `https://api.apify.com/v2/acts/betterdevsscrape~reddit-scraper/runs?token=${token}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subreddits: [subToScan],
-          maxItems,
-          maxPostCount,
-          skipComments: true,
-          sort: 'hot',
-          minScore: 1,
-          proxy: { useApifyProxy: true },
-        }),
+        body: JSON.stringify(apifyInput),
       }
     )
 
