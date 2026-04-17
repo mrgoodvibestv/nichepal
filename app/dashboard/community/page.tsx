@@ -85,8 +85,8 @@ export default function CommunitySearchPage() {
   }
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-6">
-      <div>
+    <div className="px-4 sm:px-6 lg:px-8 py-6 w-full">
+      <div className="w-full">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-black">Discover</h1>
@@ -144,7 +144,7 @@ export default function CommunitySearchPage() {
 
         {/* Results */}
         {!loading && results.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
             {results.map(result => (
               <div key={result.name} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col h-auto sm:h-[220px]">
                 {/* Top row */}
@@ -201,7 +201,7 @@ export default function CommunitySearchPage() {
 
         {/* Empty state — before any search */}
         {!loading && !hasSearched && (
-          <div className="text-center py-20 text-gray-400">
+          <div className="text-center py-20 text-gray-400 w-full">
             <p className="text-4xl mb-4">🔍</p>
             <p className="text-sm">Search for a topic to discover active communities</p>
           </div>
@@ -209,7 +209,7 @@ export default function CommunitySearchPage() {
 
         {/* No results after search */}
         {!loading && hasSearched && results.length === 0 && !error && (
-          <div className="text-center py-20 text-gray-400">
+          <div className="text-center py-20 text-gray-400 w-full">
             <p className="text-4xl mb-4">🔍</p>
             <p className="text-sm">No communities found. Try a different search.</p>
           </div>
