@@ -11,7 +11,7 @@ function sanitizeJson(str: string): string {
     .replace(/[\u201C\u201D]/g, '"')
     .replace(/[\u2018\u2019]/g, "'")
   str = str.replace(
-    /("(?:title|body_snippet|comment_template|why_engage|strategy_note|author|subreddit|url|posted_at|thread_type|priority)":\s*")([\s\S]*?)("(?:\s*[,}]))/g,
+    /("(?:title|body_snippet|comment_template|why_engage|strategy_note|author|subreddit|url|posted_at|thread_type|priority|name|reason|estimated_size)":\s*")([\s\S]*?)("(?:\s*[,}]))/g,
     (_match, prefix, content, suffix) => {
       const escaped = content.replace(/(?<!\\)"/g, '\\"')
       return prefix + escaped + suffix
