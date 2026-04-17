@@ -12,30 +12,31 @@ export async function getCredits(profileId: string): Promise<number> {
 
 export async function deductCredit(
   profileId: string,
-  description: string
+  description: string,
+  amount: number = 1
 ): Promise<{ success: boolean; remaining: number }> {
   const supabase = await createClient()
   const current = await getCredits(profileId)
 
-  if (current < 1) {
-    return { success: false, remaining: 0 }
+  if (current < amount) {
+    return { success: false, remaining: current }
   }
 
   const { error } = await supabase
     .from('profiles')
-    .update({ credits: current - 1 })
+    .update({ credits: current - amount })
     .eq('id', profileId)
 
   if (error) return { success: false, remaining: current }
 
   await supabase.from('credit_transactions').insert({
     profile_id: profileId,
-    amount: -1,
+    amount: -amount,
     type: 'deduction',
     description,
   })
 
-  return { success: true, remaining: current - 1 }
+  return { success: true, remaining: current - amount }
 }
 
 export async function grantCredits(

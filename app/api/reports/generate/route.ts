@@ -68,9 +68,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Deduct 3 credits
-    await deductCredit(profile.id, 'report_generation')
-    await deductCredit(profile.id, 'report_generation')
-    await deductCredit(profile.id, 'report_generation')
+    await deductCredit(profile.id, 'report_generation', 3)
 
     // Start Apify — fire and save run IDs, return immediately
     const token = process.env.APIFY_API_TOKEN!

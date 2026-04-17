@@ -70,8 +70,7 @@ export async function POST(req: NextRequest) {
     )
 
     // Deduct 2 credits upfront
-    await deductCredit(profile.id, 'community_search')
-    await deductCredit(profile.id, 'community_search')
+    await deductCredit(profile.id, 'community_search', 2)
 
     // Step 1: Claude suggests subreddits
     const message = await anthropic.messages.create({
