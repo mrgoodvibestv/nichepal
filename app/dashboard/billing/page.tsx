@@ -9,34 +9,6 @@ type Profile = {
   subscription_status: string | null
 }
 
-const PLANS = [
-  {
-    key: 'starter',
-    name: 'Starter',
-    price: '$49/mo',
-    credits: 50,
-    reports: '~16 reports/month',
-    priceEnvKey: 'NEXT_PUBLIC_STRIPE_PRICE_STARTER',
-  },
-  {
-    key: 'growth',
-    name: 'Growth',
-    price: '$99/mo',
-    credits: 150,
-    reports: '~50 reports/month',
-    priceEnvKey: 'NEXT_PUBLIC_STRIPE_PRICE_GROWTH',
-    popular: true,
-  },
-  {
-    key: 'pro',
-    name: 'Pro',
-    price: '$249/mo',
-    credits: 500,
-    reports: '~166 reports/month',
-    priceEnvKey: 'NEXT_PUBLIC_STRIPE_PRICE_PRO',
-  },
-]
-
 function PlanBadge({ status, pkg }: { status: string | null; pkg: string | null }) {
   if (status === 'active' && pkg && pkg !== 'free') {
     const label = pkg.charAt(0).toUpperCase() + pkg.slice(1)
@@ -71,6 +43,43 @@ function BillingContent() {
   const params = useSearchParams()
   const success = params.get('success')
   const topup = params.get('topup')
+
+  // Read env vars with static references so Next.js inlines them at build time
+  const STARTER_PRICE = process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER ?? ''
+  const GROWTH_PRICE = process.env.NEXT_PUBLIC_STRIPE_PRICE_GROWTH ?? ''
+  const PRO_PRICE = process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO ?? ''
+  const TOPUP_PRICE = process.env.NEXT_PUBLIC_STRIPE_PRICE_TOPUP ?? ''
+
+  const PLANS = [
+    {
+      key: 'starter',
+      name: 'Starter',
+      price: '$49/mo',
+      credits: 50,
+      costPerCredit: '$0.98',
+      reports: '~16 reports/month',
+      priceId: STARTER_PRICE,
+    },
+    {
+      key: 'growth',
+      name: 'Growth',
+      price: '$99/mo',
+      credits: 150,
+      costPerCredit: '$0.66',
+      reports: '~50 reports/month',
+      priceId: GROWTH_PRICE,
+      popular: true,
+    },
+    {
+      key: 'pro',
+      name: 'Pro',
+      price: '$249/mo',
+      credits: 500,
+      costPerCredit: '$0.50',
+      reports: '~166 reports/month',
+      priceId: PRO_PRICE,
+    },
+  ]
 
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loadingProfile, setLoadingProfile] = useState(true)
@@ -125,7 +134,7 @@ function BillingContent() {
 
   return (
     <div className="px-4 sm:px-8 py-6 sm:py-8">
-      <div className="mb-8 flex items-center gap-3">
+      <div className="mb-8">
         <h1 className="text-2xl font-bold text-black">Billing</h1>
       </div>
 
@@ -137,15 +146,12 @@ function BillingContent() {
       )}
 
       {/* Current plan card */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
-        <div className="flex items-start justify-between gap-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-6">
+        <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
-              Current plan
-            </p>
             <PlanBadge status={status} pkg={pkg} />
             {status === 'past_due' && (
-              <p className="text-xs text-red-500 mt-2">
+              <p className="text-xs text-red-500 mt-1.5">
                 Payment failed — please update your billing
               </p>
             )}
@@ -153,7 +159,7 @@ function BillingContent() {
           <div className="text-right">
             <p className="text-xs text-gray-400 mb-0.5">Credits remaining</p>
             {loadingProfile ? (
-              <div className="h-8 w-16 bg-gray-100 rounded animate-pulse" />
+              <div className="h-8 w-16 bg-gray-100 rounded animate-pulse ml-auto" />
             ) : (
               <p className="text-3xl font-bold bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] bg-clip-text text-transparent">
                 {profile?.credits ?? 0}
@@ -166,28 +172,43 @@ function BillingContent() {
       {/* Plan upgrade cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         {PLANS.map(plan => {
-          const priceId = process.env[plan.priceEnvKey] ?? ''
           const isCurrent = pkg === plan.key && isActive
 
           return (
             <div
               key={plan.key}
-              className={`relative bg-white rounded-2xl border p-5 flex flex-col ${
-                isCurrent ? 'border-[#4B6BF5]' : 'border-gray-100 shadow-sm'
+              className={`bg-white rounded-2xl p-5 flex flex-col ${
+                isCurrent
+                  ? 'border-2 border-[#4B6BF5]'
+                  : plan.popular
+                  ? 'border-2 border-[#7F77DD]'
+                  : 'border border-gray-200'
               }`}
             >
-              {plan.popular && (
-                <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] text-white text-[10px] font-bold px-3 py-0.5 rounded-full whitespace-nowrap">
-                  Most popular
-                </span>
-              )}
-              <div className="mb-3">
-                <p className="font-bold text-black text-base">{plan.name}</p>
-                <p className="text-lg font-semibold text-black mt-0.5">{plan.price}</p>
+              {/* Header row with inline badges */}
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <p className="font-bold text-black text-base">{plan.name}</p>
+                  <p className="text-lg font-semibold text-black mt-0.5">{plan.price}</p>
+                </div>
+                {plan.popular && (
+                  <span className="text-[10px] font-semibold uppercase tracking-wide bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] text-white px-2 py-0.5 rounded-full">
+                    Popular
+                  </span>
+                )}
+                {plan.key === 'pro' && (
+                  <span className="text-[10px] font-semibold uppercase tracking-wide bg-green-500 text-white px-2 py-0.5 rounded-full">
+                    Best value
+                  </span>
+                )}
               </div>
-              <p className="text-sm text-gray-500 mb-0.5">{plan.credits} credits</p>
+
+              <p className="text-xs text-gray-400 mb-1">
+                {plan.credits} credits · {plan.costPerCredit}/credit
+              </p>
               <p className="text-sm text-gray-500 mb-1">{plan.reports}</p>
               <p className="text-xs text-gray-400 mb-4">Credits reset monthly</p>
+
               <div className="mt-auto">
                 {isCurrent ? (
                   <button
@@ -198,11 +219,15 @@ function BillingContent() {
                   </button>
                 ) : (
                   <button
-                    onClick={() => handleCheckout(priceId, false)}
-                    disabled={loadingId === priceId || !priceId}
+                    onClick={() => handleCheckout(plan.priceId, false)}
+                    disabled={loadingId === plan.priceId || !plan.priceId}
                     className="w-full rounded-lg py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    {loadingId === priceId ? 'Loading...' : `Upgrade to ${plan.name}`}
+                    {!plan.priceId
+                      ? 'Unavailable'
+                      : loadingId === plan.priceId
+                      ? 'Loading...'
+                      : `Upgrade to ${plan.name}`}
                   </button>
                 )}
               </div>
@@ -225,16 +250,13 @@ function BillingContent() {
             Top-up credits do not reset monthly — they stay until used.
           </p>
           <button
-            onClick={() =>
-              handleCheckout(process.env.NEXT_PUBLIC_STRIPE_PRICE_TOPUP ?? '', true)
-            }
-            disabled={
-              loadingId === process.env.NEXT_PUBLIC_STRIPE_PRICE_TOPUP ||
-              !process.env.NEXT_PUBLIC_STRIPE_PRICE_TOPUP
-            }
+            onClick={() => handleCheckout(TOPUP_PRICE, true)}
+            disabled={loadingId === TOPUP_PRICE || !TOPUP_PRICE}
             className="px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {loadingId === process.env.NEXT_PUBLIC_STRIPE_PRICE_TOPUP
+            {!TOPUP_PRICE
+              ? 'Unavailable'
+              : loadingId === TOPUP_PRICE
               ? 'Loading...'
               : 'Buy 20 credits — $30'}
           </button>
