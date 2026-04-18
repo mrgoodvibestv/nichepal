@@ -2,14 +2,15 @@
 
 import { useState, useEffect, useRef } from 'react'
 
-const communities = [
-  'r/indiefilm', 'r/personalfinance', 'r/startups', 'r/SaaS',
-  'r/entrepreneur', 'r/investing', 'r/Filmmakers', 'r/smallbusiness',
-  'r/marketing', 'r/realestate', 'r/webdev', 'r/productivity',
-  'r/content_marketing', 'r/growthhacking', 'r/SEO',
-  'r/ecommerce', 'r/Crowdfunding', 'r/indiehackers',
-]
 import Link from 'next/link'
+
+const audiences = [
+  'SaaS Founders', 'Content Creators', 'Independent Filmmakers',
+  'E-commerce Operators', 'Real Estate Investors', 'Personal Finance Enthusiasts',
+  'Marketing Professionals', 'Web Developers', 'Small Business Owners',
+  'Growth Hackers', 'Crowdfunding Campaigners', 'Indie Hackers',
+  'Bootstrapped Founders',
+]
 
 interface DemoResult {
   business_name: string
@@ -131,7 +132,7 @@ export default function HomePage() {
       </nav>
 
       {/* ── 2. Hero ── */}
-      <section className="pt-20 pb-12 text-center px-6">
+      <section className="pt-28 pb-16 text-center px-6">
         <div className="max-w-3xl mx-auto">
           <h1 className="text-5xl font-bold tracking-tight text-black leading-tight mb-6 text-center">
             Find exactly where your{' '}
@@ -156,10 +157,13 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Community ticker — full viewport width */}
+        {/* Audience ticker — full viewport width */}
+        <p className="text-xs text-gray-400 text-center mb-4 uppercase tracking-widest">
+          Built for
+        </p>
         <div className="overflow-hidden w-full">
           <div
-            className="flex gap-6 whitespace-nowrap"
+            className="flex gap-8 whitespace-nowrap"
             style={{
               display: 'flex',
               width: 'max-content',
@@ -169,10 +173,10 @@ export default function HomePage() {
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           >
-            {[...communities, ...communities].map((c, i) => (
-              <span key={i} className="text-sm text-gray-400 shrink-0">
-                {c}
-                <span className="ml-6 text-gray-200">·</span>
+            {[...audiences, ...audiences].map((a, i) => (
+              <span key={i} className="flex items-center gap-2 shrink-0">
+                <span style={{ color: '#FF4500' }} className="text-xs">●</span>
+                <span className="text-sm text-gray-500">{a}</span>
               </span>
             ))}
           </div>
