@@ -29,6 +29,15 @@ function SearchIcon() {
   )
 }
 
+function BillingIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+      <line x1="1" y1="10" x2="23" y2="10"/>
+    </svg>
+  )
+}
+
 function SettingsIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -156,6 +165,13 @@ export default function Sidebar({ credits, isOpen = false, onClose }: SidebarPro
           <p className="px-6 mb-1 mt-6 text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400">
             Account
           </p>
+          <NavItem
+            href="/dashboard/billing"
+            icon={<BillingIcon />}
+            label="Billing"
+            isActive={pathname === '/dashboard/billing'}
+            onClick={onClose}
+          />
           <NavItem
             href="/dashboard/settings"
             icon={<SettingsIcon />}
