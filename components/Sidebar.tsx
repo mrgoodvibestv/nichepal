@@ -135,9 +135,9 @@ export default function Sidebar({ credits, isOpen = false, onClose }: SidebarPro
           </svg>
         </button>
 
-        {/* Logo row — desktop only */}
-        <div className="hidden lg:flex px-6 py-6 items-center">
-          <span className="text-2xl font-bold tracking-tight">
+        {/* Logo row — visible on both mobile drawer and desktop sidebar */}
+        <div className="flex px-6 py-5 items-center">
+          <span className="text-lg lg:text-2xl font-bold tracking-tight">
             <span className="text-black">Niche</span>
             <span className="bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] bg-clip-text text-transparent">
               Pal
