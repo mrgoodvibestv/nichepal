@@ -59,7 +59,7 @@ export default function HomePage() {
       </nav>
 
       {/* ── Hero ── */}
-      <section className="pt-36 pb-20 text-center px-6">
+      <section className="pt-36 pb-10 text-center px-6">
         <div className="max-w-3xl mx-auto">
 
           {/* FIX 1 — new headline */}
@@ -73,7 +73,7 @@ export default function HomePage() {
 
           {/* FIX 2 — updated subtext */}
           <p className="text-lg text-gray-500 max-w-lg mx-auto text-center mb-10 leading-relaxed">
-            Let AI find the subreddits your customers actively engage in, then join the conversation.
+            Our Agent finds the subreddits your customers actively engage in, and then provides you with a comment to join the conversation.
           </p>
 
           <Link
@@ -132,7 +132,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Footer — FIX 4 ── */}
-      <footer className="py-8 px-6 text-center">
+      <footer className="py-4 px-6 text-center">
         <p className="text-sm text-gray-400">A product of Good Vibes AI</p>
       </footer>
 
