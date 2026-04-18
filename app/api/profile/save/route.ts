@@ -14,6 +14,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Check if this user already has a profile BEFORE the upsert.
+    // Used to detect first-time onboarding and grant welcome credits.
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    const isNewUser = !existingProfile
+
     const body = await req.json()
     const {
       url,
@@ -47,11 +57,31 @@ export async function POST(req: NextRequest) {
 
     if (pkg !== undefined) upsertData.package = pkg
 
-    const { error } = await supabase.from('profiles').upsert(upsertData, { onConflict: 'user_id' })
+    const { data: savedProfile, error } = await supabase
+      .from('profiles')
+      .upsert(upsertData, { onConflict: 'user_id' })
+      .select('id')
+      .single()
 
-    if (error) {
+    if (error || !savedProfile) {
       console.error('[profile/save]', error)
       return NextResponse.json({ error: 'Failed to save profile' }, { status: 500 })
+    }
+
+    // Grant 10 welcome credits on first-time profile creation.
+    // New users have 0 credits by default and can't use the app
+    // until they subscribe or receive welcome credits.
+    if (isNewUser) {
+      await supabase
+        .from('profiles')
+        .update({ credits: 10 })
+        .eq('id', savedProfile.id)
+      await supabase.from('credit_transactions').insert({
+        profile_id: savedProfile.id,
+        amount: 10,
+        type: 'grant',
+        description: 'welcome_credits',
+      })
     }
 
     return NextResponse.json({ success: true })

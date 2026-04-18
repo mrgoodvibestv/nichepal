@@ -16,27 +16,20 @@ export async function deductCredit(
   amount: number = 1
 ): Promise<{ success: boolean; remaining: number }> {
   const supabase = await createClient()
-  const current = await getCredits(profileId)
-
-  if (current < amount) {
-    return { success: false, remaining: current }
-  }
-
-  const { error } = await supabase
-    .from('profiles')
-    .update({ credits: current - amount })
-    .eq('id', profileId)
-
-  if (error) return { success: false, remaining: current }
-
-  await supabase.from('credit_transactions').insert({
-    profile_id: profileId,
-    amount: -amount,
-    type: 'deduction',
-    description,
+  // Atomic decrement via Postgres function — eliminates the read-then-write
+  // race condition where two simultaneous calls could both pass the balance
+  // check and both write the same decremented value.
+  const { data, error } = await supabase.rpc('deduct_credits', {
+    p_profile_id: profileId,
+    p_amount: amount,
+    p_description: description,
   })
 
-  return { success: true, remaining: current - amount }
+  if (error || (data as number) === -1) {
+    return { success: false, remaining: 0 }
+  }
+
+  return { success: true, remaining: data as number }
 }
 
 export async function grantCredits(
