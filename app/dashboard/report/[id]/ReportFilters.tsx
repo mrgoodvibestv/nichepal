@@ -41,8 +41,8 @@ export default function ReportFilters({ threads }: { threads: Thread[] }) {
 
   function pillClass(active: boolean) {
     return active
-      ? 'bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] text-white rounded-full px-4 py-1.5 text-sm font-medium transition'
-      : 'border border-gray-200 text-gray-600 rounded-full px-4 py-1.5 text-sm hover:border-gray-300 transition'
+      ? 'bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] text-white rounded-full px-4 py-1.5 text-sm font-medium transition min-h-[44px] inline-flex items-center'
+      : 'border border-gray-200 text-gray-600 rounded-full px-4 py-1.5 text-sm hover:border-gray-300 transition min-h-[44px] inline-flex items-center'
   }
 
   return (

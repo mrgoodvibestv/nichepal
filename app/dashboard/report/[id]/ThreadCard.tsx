@@ -92,7 +92,7 @@ export default function ThreadCard({
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow p-6 hover:shadow-lg transition-shadow duration-200">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow p-4 sm:p-6 hover:shadow-lg transition-shadow duration-200">
       {/* Top row */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 flex-wrap">
@@ -111,7 +111,7 @@ export default function ThreadCard({
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-semibold text-black hover:text-[#4B6BF5] transition leading-snug line-clamp-2"
+          className="font-semibold text-sm sm:text-base text-black hover:text-[#4B6BF5] transition leading-snug line-clamp-2"
         >
           {title}
         </Link>

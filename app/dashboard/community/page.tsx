@@ -96,7 +96,7 @@ export default function CommunitySearchPage() {
         </div>
 
         {/* Search bar */}
-        <div className="flex gap-3 mb-2">
+        <div className="flex flex-col sm:flex-row gap-3 mb-2">
           <input
             type="text"
             value={query}
@@ -108,7 +108,7 @@ export default function CommunitySearchPage() {
           <button
             onClick={handleSearch}
             disabled={loading || !query.trim()}
-            className="shrink-0 px-5 py-3 rounded-xl font-semibold text-white text-sm bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
+            className="w-full sm:w-auto sm:shrink-0 px-5 py-3 rounded-xl font-semibold text-white text-sm bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
           >
             {loading ? 'Searching...' : 'Find Communities'}
           </button>
@@ -170,13 +170,13 @@ export default function CommunitySearchPage() {
                       ✓ Added to {added[result.name]}
                     </p>
                   )}
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <select
                       value={selectedAudience[result.name] ?? ''}
                       onChange={e =>
                         setSelectedAudience(prev => ({ ...prev, [result.name]: e.target.value }))
                       }
-                      className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#4B6BF5] bg-white appearance-none"
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#4B6BF5] bg-white appearance-none"
                     >
                       <option value="">Add to audience...</option>
                       {audiences.map(aud => (
@@ -188,7 +188,7 @@ export default function CommunitySearchPage() {
                     <button
                       onClick={() => handleAdd(result.name)}
                       disabled={!selectedAudience[result.name] || adding[result.name]}
-                      className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+                      className="w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap min-h-[44px]"
                     >
                       {adding[result.name] ? 'Adding...' : 'Add'}
                     </button>

@@ -166,7 +166,7 @@ function BillingContent() {
 
       {/* Current plan card */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-6">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <PlanBadge status={status} pkg={pkg} />
             {status === 'past_due' && (
@@ -175,10 +175,10 @@ function BillingContent() {
               </p>
             )}
           </div>
-          <div className="text-right">
+          <div className="sm:text-right">
             <p className="text-xs text-gray-400 mb-0.5">Credits remaining</p>
             {loadingProfile ? (
-              <div className="h-8 w-16 bg-gray-100 rounded animate-pulse ml-auto" />
+              <div className="h-8 w-16 bg-gray-100 rounded animate-pulse sm:ml-auto" />
             ) : (
               <p className="text-3xl font-bold bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] bg-clip-text text-transparent">
                 {profile?.credits ?? 0}
@@ -280,7 +280,7 @@ function BillingContent() {
           <button
             onClick={() => handleCheckout(TOPUP_PRICE, true)}
             disabled={loadingId === TOPUP_PRICE || !TOPUP_PRICE}
-            className="px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px]"
           >
             {!TOPUP_PRICE
               ? 'Unavailable'

@@ -182,7 +182,7 @@ export default function DashboardClient({
                   {report.status === 'complete' && (
                     <Link
                       href={`/dashboard/report/${report.id}`}
-                      className="text-sm font-medium bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] bg-clip-text text-transparent hover:opacity-80 transition"
+                      className="text-sm font-medium bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] bg-clip-text text-transparent hover:opacity-80 transition inline-flex items-center min-h-[44px]"
                     >
                       View Report →
                     </Link>

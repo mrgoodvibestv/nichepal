@@ -131,7 +131,7 @@ function AudienceCard({
             <button
               type="button"
               onClick={() => setAddingSub(true)}
-              className="bg-gray-50 border border-dashed border-gray-300 rounded-full px-2.5 py-1 text-xs text-[#4B6BF5] hover:border-[#4B6BF5] transition"
+              className="bg-gray-50 border border-dashed border-gray-300 rounded-full px-2.5 py-1 text-xs text-[#4B6BF5] hover:border-[#4B6BF5] transition min-h-[44px] inline-flex items-center"
             >
               + Add
             </button>
@@ -323,7 +323,7 @@ export default function SettingsPage() {
                 <button
                   type="button"
                   onClick={() => setAddingKeyword(true)}
-                  className="bg-gray-50 border border-dashed border-gray-300 rounded-full px-3 py-1.5 text-sm text-[#4B6BF5] hover:border-[#4B6BF5] transition"
+                  className="bg-gray-50 border border-dashed border-gray-300 rounded-full px-3 py-1.5 text-sm text-[#4B6BF5] hover:border-[#4B6BF5] transition min-h-[44px] inline-flex items-center"
                 >
                   + Add
                 </button>

@@ -119,8 +119,8 @@ export default function Sidebar({ credits, isOpen = false, onClose }: SidebarPro
           'fixed lg:relative top-0 left-0 h-full lg:h-screen z-50 lg:z-auto',
           'w-64 bg-white border-r border-gray-100 flex flex-col shrink-0',
           'pt-14 lg:pt-0',
+          'rounded-r-2xl lg:rounded-r-none',
           'transition-transform duration-200',
-          'relative',
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
         ].join(' ')}
       >
