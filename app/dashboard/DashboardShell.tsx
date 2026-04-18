@@ -15,7 +15,8 @@ export default function DashboardShell({
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Mobile top bar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-white border-b border-gray-100 px-4 h-14 flex items-center">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-100 px-4 h-14 flex items-center justify-between">
+        {/* Left: hamburger */}
         <button
           onClick={() => setSidebarOpen(true)}
           className="p-2 rounded-lg hover:bg-gray-100 transition"
@@ -25,12 +26,17 @@ export default function DashboardShell({
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-        <span className="ml-3 font-bold text-black">
-          Niche
+
+        {/* Center: logo */}
+        <span className="absolute left-1/2 -translate-x-1/2 text-lg font-bold tracking-tight">
+          <span className="text-black">Niche</span>
           <span className="bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] bg-clip-text text-transparent">
             Pal
           </span>
         </span>
+
+        {/* Right: credits badge */}
+        <span className="text-xs text-[#4B6BF5] font-medium">{credits} credits</span>
       </div>
 
       <Sidebar

@@ -108,7 +108,7 @@ export default function Sidebar({ credits, isOpen = false, onClose }: SidebarPro
       {/* Mobile backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/30 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
           onClick={onClose}
         />
       )}
@@ -118,28 +118,31 @@ export default function Sidebar({ credits, isOpen = false, onClose }: SidebarPro
         className={[
           'fixed lg:relative top-0 left-0 h-full lg:h-screen z-50 lg:z-auto',
           'w-64 bg-white border-r border-gray-100 flex flex-col shrink-0',
+          'pt-14 lg:pt-0',
           'transition-transform duration-200',
+          'relative',
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
         ].join(' ')}
       >
-        {/* Logo row */}
-        <div className="px-6 py-6 flex items-center justify-between">
+        {/* X button — mobile only, absolute so it sits in the pt-14 gap */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 lg:hidden p-1.5 rounded-lg hover:bg-gray-100 transition"
+          aria-label="Close menu"
+        >
+          <svg className="w-5 h-5 text-gray-400 hover:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        {/* Logo row — desktop only */}
+        <div className="hidden lg:flex px-6 py-6 items-center">
           <span className="text-2xl font-bold tracking-tight">
             <span className="text-black">Niche</span>
             <span className="bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] bg-clip-text text-transparent">
               Pal
             </span>
           </span>
-          {/* X button — mobile only */}
-          <button
-            onClick={onClose}
-            className="lg:hidden p-1.5 rounded-lg hover:bg-gray-100 transition"
-            aria-label="Close menu"
-          >
-            <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
         </div>
 
         {/* Nav */}
