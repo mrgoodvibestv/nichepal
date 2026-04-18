@@ -3,12 +3,22 @@
 import { useState } from 'react'
 import Link from 'next/link'
 
-const audiences = [
-  'SaaS Founders', 'Content Creators', 'Independent Filmmakers',
-  'E-commerce Operators', 'Real Estate Investors', 'Personal Finance Enthusiasts',
-  'Marketing Professionals', 'Web Developers', 'Small Business Owners',
-  'Growth Hackers', 'Crowdfunding Campaigners', 'Indie Hackers',
-  'Bootstrapped Founders',
+const communities = [
+  { name: 'Personal Finance', members: '15.2M' },
+  { name: 'Entrepreneur', members: '3.1M' },
+  { name: 'Startups', members: '1.2M' },
+  { name: 'SaaS', members: '280K' },
+  { name: 'Indie Filmmakers', members: '340K' },
+  { name: 'Small Business', members: '1.8M' },
+  { name: 'Marketing', members: '890K' },
+  { name: 'Real Estate', members: '2.3M' },
+  { name: 'Web Dev', members: '920K' },
+  { name: 'Crowdfunding', members: '178K' },
+  { name: 'Growth Hacking', members: '255K' },
+  { name: 'E-commerce', members: '1.1M' },
+  { name: 'Content Marketing', members: '310K' },
+  { name: 'Investing', members: '4.4M' },
+  { name: 'Indie Hackers', members: '520K' },
 ]
 
 export default function HomePage() {
@@ -50,14 +60,20 @@ export default function HomePage() {
       {/* ── Hero ── */}
       <section className="pt-36 pb-20 text-center px-6">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-black leading-tight text-center mb-6">
-            Stop guessing.<br />
-            Start showing up.
+
+          {/* FIX 1 — new headline */}
+          <h1 className="text-6xl sm:text-7xl font-bold tracking-tight leading-none text-center mb-6">
+            <span className="text-black">Active communities.</span>
+            <br />
+            <span className="bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] bg-clip-text text-transparent">
+              Warm leads.
+            </span>
           </h1>
 
+          {/* FIX 2 — updated subtext */}
           <p className="text-lg text-gray-500 max-w-lg mx-auto text-center mb-10 leading-relaxed">
-            Your customers are talking on Reddit right now. NichePal tells you exactly where —
-            and writes the comment that gets you in the room.
+            NichePal finds the subreddits your customers actually live in,
+            surfaces the threads worth joining, and writes your comment — ready to post.
           </p>
 
           <Link
@@ -72,37 +88,51 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* Audience ticker */}
-        <div className="mt-16">
-          <p className="text-xs text-gray-400 text-center mb-4 uppercase tracking-widest">
-            Built for
-          </p>
-          <div className="overflow-hidden w-full">
-            <div
-              className="flex gap-8 whitespace-nowrap"
-              style={{
-                display: 'flex',
-                width: 'max-content',
-                animation: 'ticker 30s linear infinite',
-                animationPlayState: isHovered ? 'paused' : 'running',
-              }}
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-            >
-              {[...audiences, ...audiences].map((a, i) => (
-                <span key={i} className="flex items-center gap-2 shrink-0">
-                  <span style={{ color: '#FF4500' }} className="text-xs">●</span>
-                  <span className="text-sm text-gray-500">{a}</span>
+        {/* FIX 3 — community stat cards ticker */}
+        <div
+          className="mt-16 overflow-hidden w-full relative"
+          style={{
+            maskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)',
+            WebkitMaskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)',
+          }}
+        >
+          <div
+            className="flex gap-3"
+            style={{
+              display: 'flex',
+              width: 'max-content',
+              animation: 'ticker 40s linear infinite',
+              animationPlayState: isHovered ? 'paused' : 'running',
+            }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+          >
+            {[...communities, ...communities].map((community, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-2 shrink-0 bg-white border border-gray-100 rounded-full px-4 py-2 shadow-sm"
+              >
+                <span
+                  className="w-4 h-4 rounded-full flex items-center justify-center text-white font-bold shrink-0"
+                  style={{ background: '#FF4500', fontSize: '8px' }}
+                >
+                  R
                 </span>
-              ))}
-            </div>
+                <span className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                  {community.name}
+                </span>
+                <span className="text-xs text-gray-400 whitespace-nowrap">
+                  {community.members}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ── Footer ── */}
+      {/* ── Footer — FIX 4 ── */}
       <footer className="py-8 px-6 text-center">
-        <p className="text-sm text-gray-400">© 2026 NichePal · Part of Good Vibes AI</p>
+        <p className="text-sm text-gray-400">A product of Good Vibes AI</p>
       </footer>
 
     </div>
