@@ -84,6 +84,7 @@ function BillingContent() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loadingProfile, setLoadingProfile] = useState(true)
   const [loadingId, setLoadingId] = useState<string | null>(null)
+  const [portalLoading, setPortalLoading] = useState(false)
   const [error, setError] = useState('')
   const [banner, setBanner] = useState<string | null>(
     success ? 'Your plan is active! Credits have been added.' :
@@ -105,6 +106,24 @@ function BillingContent() {
       .catch(() => {})
       .finally(() => setLoadingProfile(false))
   }, [])
+
+  async function handlePortal() {
+    setError('')
+    setPortalLoading(true)
+    try {
+      const res = await fetch('/api/stripe/portal', { method: 'POST' })
+      const data: { url?: string; error?: string } = await res.json()
+      if (data.error) {
+        setError(data.error)
+        setPortalLoading(false)
+        return
+      }
+      if (data.url) window.location.href = data.url
+    } catch {
+      setError('Something went wrong. Please try again.')
+      setPortalLoading(false)
+    }
+  }
 
   async function handleCheckout(priceId: string, isTopUp: boolean) {
     setError('')
@@ -216,6 +235,15 @@ function BillingContent() {
                     className="w-full rounded-lg py-2.5 text-sm font-medium text-gray-400 bg-gray-100 cursor-not-allowed"
                   >
                     Current plan
+                  </button>
+                ) : isActive ? (
+                  // Active subscriber on a different plan — portal handles upgrades/downgrades
+                  <button
+                    onClick={handlePortal}
+                    disabled={portalLoading}
+                    className="w-full rounded-lg py-2.5 text-sm font-semibold text-[#4B6BF5] border border-[#4B6BF5] hover:bg-[#4B6BF5]/5 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {portalLoading ? 'Loading...' : 'Manage plan'}
                   </button>
                 ) : (
                   <button

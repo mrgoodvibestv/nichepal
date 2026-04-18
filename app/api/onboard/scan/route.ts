@@ -1,7 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createClient } from '@/lib/supabase/server'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+
+// Reject private/internal hostnames to prevent SSRF attacks
+function isPublicUrl(urlStr: string): boolean {
+  try {
+    const parsed = new URL(urlStr)
+    if (!['http:', 'https:'].includes(parsed.protocol)) return false
+    const h = parsed.hostname
+    if (
+      h === 'localhost' ||
+      /^127\./.test(h) ||
+      /^10\./.test(h) ||
+      /^172\.(1[6-9]|2[0-9]|3[01])\./.test(h) ||
+      /^192\.168\./.test(h) ||
+      /^169\.254\./.test(h) ||   // link-local / AWS metadata
+      /^::1$/.test(h) ||
+      /^0\.0\.0\.0$/.test(h) ||
+      /\.internal$/.test(h)      // GCP internal DNS
+    ) return false
+    return true
+  } catch {
+    return false
+  }
+}
 
 async function fetchWebsiteContent(url: string): Promise<string | null> {
   try {
@@ -26,9 +50,24 @@ async function fetchWebsiteContent(url: string): Promise<string | null> {
 
 export async function POST(req: NextRequest) {
   try {
+    // Auth check — prevents unauthenticated Anthropic API usage
+    const supabase = await createClient()
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const { url } = await req.json()
     if (!url || typeof url !== 'string') {
       return NextResponse.json({ error: 'URL required' }, { status: 400 })
+    }
+
+    // SSRF guard — reject private/internal URLs
+    if (!isPublicUrl(url)) {
+      return NextResponse.json({ error: 'Invalid URL' }, { status: 400 })
     }
 
     const content = await fetchWebsiteContent(url)

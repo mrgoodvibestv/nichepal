@@ -72,15 +72,11 @@ export async function POST(req: NextRequest) {
     // New users have 0 credits by default and can't use the app
     // until they subscribe or receive welcome credits.
     if (isNewUser) {
-      await supabase
-        .from('profiles')
-        .update({ credits: 10 })
-        .eq('id', savedProfile.id)
-      await supabase.from('credit_transactions').insert({
-        profile_id: savedProfile.id,
-        amount: 10,
-        type: 'grant',
-        description: 'welcome_credits',
+      // Atomic grant — prevents double-crediting on concurrent save requests
+      await supabase.rpc('grant_credits', {
+        p_profile_id: savedProfile.id,
+        p_amount: 10,
+        p_description: 'welcome_credits',
       })
     }
 

@@ -38,17 +38,10 @@ export async function grantCredits(
   description: string
 ): Promise<void> {
   const supabase = await createClient()
-  const current = await getCredits(profileId)
-
-  await supabase
-    .from('profiles')
-    .update({ credits: current + amount })
-    .eq('id', profileId)
-
-  await supabase.from('credit_transactions').insert({
-    profile_id: profileId,
-    amount,
-    type: 'grant',
-    description,
+  // Atomic increment via Postgres function — same safety as deductCredit
+  await supabase.rpc('grant_credits', {
+    p_profile_id: profileId,
+    p_amount: amount,
+    p_description: description,
   })
 }

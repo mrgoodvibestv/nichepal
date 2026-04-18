@@ -67,9 +67,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to create report' }, { status: 500 })
     }
 
-    // Deduct 3 credits
-    await deductCredit(profile.id, 'report_generation', 3)
-
     // Start Apify — fire and save run IDs, return immediately
     const token = process.env.APIFY_API_TOKEN!
     const apifyInput = {
@@ -95,6 +92,15 @@ export async function POST(req: NextRequest) {
     if (!apifyRes.ok) {
       await db.from('reports').update({ status: 'failed' }).eq('id', report.id)
       return NextResponse.json({ error: 'Failed to start scrape' }, { status: 500 })
+    }
+
+    // Deduct 3 credits only after Apify successfully starts.
+    // Check return value — a concurrent request could have drained credits
+    // between the balance check above and this deduction.
+    const deductResult = await deductCredit(profile.id, 'report_generation', 3)
+    if (!deductResult.success) {
+      await db.from('reports').update({ status: 'failed' }).eq('id', report.id)
+      return NextResponse.json({ error: 'Not enough credits' }, { status: 400 })
     }
 
     const apifyData = await apifyRes.json()

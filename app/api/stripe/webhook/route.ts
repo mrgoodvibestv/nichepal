@@ -41,21 +41,11 @@ export async function POST(req: NextRequest) {
       const db = createServiceClient()
 
       if (isTopUp) {
-        const { data: profileData } = await db
-          .from('profiles')
-          .select('credits')
-          .eq('id', profileId)
-          .single()
-        const currentCredits: number = profileData?.credits ?? 0
-        await db
-          .from('profiles')
-          .update({ credits: currentCredits + 20 })
-          .eq('id', profileId)
-        await db.from('credit_transactions').insert({
-          profile_id: profileId,
-          amount: 20,
-          type: 'grant',
-          description: 'credit_topup',
+        // Atomic increment — prevents double-grant on duplicate webhook events
+        await db.rpc('grant_credits', {
+          p_profile_id: profileId,
+          p_amount: 20,
+          p_description: 'credit_topup',
         })
       } else {
         const credits =

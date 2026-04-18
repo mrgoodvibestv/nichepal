@@ -25,9 +25,11 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, credits')
+    .select('id, credits, onboarded')
     .eq('user_id', user.id)
     .single()
+
+  if (!profile || !profile.onboarded) redirect('/onboarding')
 
   const { data: reports } = await supabase
     .from('reports')

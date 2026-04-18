@@ -43,6 +43,15 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Prevent creating a second subscription while one is already active.
+    // Plan changes must go through the billing portal (cancel + resubscribe).
+    if (!isTopUp && profile.subscription_status === 'active') {
+      return NextResponse.json(
+        { error: 'You already have an active subscription. Use the billing portal to change plans.' },
+        { status: 400 }
+      )
+    }
+
     // Get or create Stripe customer
     let stripeCustomerId: string = profile.stripe_customer_id
     if (!stripeCustomerId) {

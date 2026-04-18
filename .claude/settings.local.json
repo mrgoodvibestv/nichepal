@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm -rf node_modules/.bin/tsc node_modules/typescript)",
+      "Bash(npm install *)",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(npm run *)",
+      "Bash(supabase db *)",
+      "Bash(mkdir -p /Users/mrgoodvibes/NichePal/app/api/reports/status/\\\\[id\\\\])",
+      "Bash(mkdir -p /Users/mrgoodvibes/NichePal/app/api/reports/analyze/\\\\[id\\\\])"
+    ]
+  }
+}
