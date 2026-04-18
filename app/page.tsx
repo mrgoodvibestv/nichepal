@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 
 const communities = [
@@ -63,17 +64,16 @@ export default function HomePage() {
 
           {/* FIX 1 — new headline */}
           <h1 className="text-6xl sm:text-7xl font-bold tracking-tight leading-none text-center mb-6">
-            <span className="text-black">Active communities.</span>
+            <span className="text-black">Reddit communities.</span>
             <br />
             <span className="bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] bg-clip-text text-transparent">
-              Warm leads.
+              High-intent leads.
             </span>
           </h1>
 
           {/* FIX 2 — updated subtext */}
           <p className="text-lg text-gray-500 max-w-lg mx-auto text-center mb-10 leading-relaxed">
-            NichePal finds the subreddits your customers actually live in,
-            surfaces the threads worth joining, and writes your comment — ready to post.
+            Let AI find the subreddits your customers actively engage in, then join the conversation.
           </p>
 
           <Link
@@ -112,12 +112,13 @@ export default function HomePage() {
                 key={i}
                 className="flex items-center gap-2 shrink-0 bg-white border border-gray-100 rounded-full px-4 py-2 shadow-sm"
               >
-                <span
-                  className="w-4 h-4 rounded-full flex items-center justify-center text-white font-bold shrink-0"
-                  style={{ background: '#FF4500', fontSize: '8px' }}
-                >
-                  R
-                </span>
+                <Image
+                  src="/reddit-icon.png"
+                  alt="Reddit"
+                  width={16}
+                  height={16}
+                  className="shrink-0"
+                />
                 <span className="text-sm font-medium text-gray-700 whitespace-nowrap">
                   {community.name}
                 </span>
