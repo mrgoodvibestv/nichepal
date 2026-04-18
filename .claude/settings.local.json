@@ -10,7 +10,9 @@
       "Bash(npm run *)",
       "Bash(supabase db *)",
       "Bash(mkdir -p /Users/mrgoodvibes/NichePal/app/api/reports/status/\\\\[id\\\\])",
-      "Bash(mkdir -p /Users/mrgoodvibes/NichePal/app/api/reports/analyze/\\\\[id\\\\])"
+      "Bash(mkdir -p /Users/mrgoodvibes/NichePal/app/api/reports/analyze/\\\\[id\\\\])",
+      "Bash(cp '/Users/mrgoodvibes/Downloads/GV Favicon White.png' /Users/mrgoodvibes/NichePal/app/icon.png)",
+      "Bash(cp '/Users/mrgoodvibes/Downloads/Social Banner NichePal.png' /Users/mrgoodvibes/NichePal/public/og-image.png)"
     ]
   }
 }
