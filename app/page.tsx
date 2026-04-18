@@ -26,13 +26,6 @@ export default function HomePage() {
   const [isHovered, setIsHovered] = useState(false)
 
   return (
-    <>
-    <style>{`
-      @keyframes ticker {
-        0%   { transform: translateX(0); }
-        100% { transform: translateX(-50%); }
-      }
-    `}</style>
     <div className="min-h-screen bg-white">
 
       {/* ── Nav ── */}
@@ -137,6 +130,5 @@ export default function HomePage() {
       </footer>
 
     </div>
-    </>
   )
 }
