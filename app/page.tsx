@@ -73,7 +73,7 @@ export default function HomePage() {
 
           {/* FIX 2 — updated subtext */}
           <p className="text-lg text-gray-500 max-w-lg mx-auto text-center mb-10 leading-relaxed">
-            Our Agent finds the subreddits your customers actively engage in, and then provides you with a comment to join the conversation.
+            Our AI Agent finds the subreddits your customers actively engage in, then provides you with scripts to join the convo.
           </p>
 
           <Link
