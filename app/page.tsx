@@ -1,6 +1,14 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+
+const communities = [
+  'r/indiefilm', 'r/personalfinance', 'r/startups', 'r/SaaS',
+  'r/entrepreneur', 'r/investing', 'r/Filmmakers', 'r/smallbusiness',
+  'r/marketing', 'r/realestate', 'r/webdev', 'r/productivity',
+  'r/content_marketing', 'r/growthhacking', 'r/SEO',
+  'r/ecommerce', 'r/Crowdfunding', 'r/indiehackers',
+]
 import Link from 'next/link'
 
 interface DemoResult {
@@ -27,7 +35,7 @@ export default function HomePage() {
   const [error, setError] = useState('')
   const [msgIndex, setMsgIndex] = useState(0)
   const [cooldown, setCooldown] = useState(0)
-  const demoRef = useRef<HTMLElement>(null)
+  const [isHovered, setIsHovered] = useState(false)
   const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // Cycle loading messages
@@ -85,17 +93,20 @@ export default function HomePage() {
     }
   }
 
-  function scrollToDemo() {
-    demoRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
-
   const scanDisabled = loading || cooldown > 0
 
   return (
+    <>
+    <style>{`
+      @keyframes ticker {
+        0%   { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+      }
+    `}</style>
     <div className="min-h-screen bg-white">
 
       {/* ── 1. Nav ── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur">
         {/* FIX 1: removed max-w-6xl mx-auto — nav spans full width */}
         <div className="px-6 h-16 flex items-center justify-between">
           <span className="text-xl font-bold tracking-tight">
@@ -120,12 +131,8 @@ export default function HomePage() {
       </nav>
 
       {/* ── 2. Hero ── */}
-      <section className="pt-32 pb-20 text-center px-6">
+      <section className="pt-20 pb-12 text-center px-6">
         <div className="max-w-3xl mx-auto">
-          <span className="border border-gray-200 rounded-full px-3 py-1 text-xs text-gray-500 inline-block mb-6">
-            Reddit Intelligence Platform
-          </span>
-
           <h1 className="text-5xl font-bold tracking-tight text-black leading-tight mb-6 text-center">
             Find exactly where your{' '}
             <span className="bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] bg-clip-text text-transparent">
@@ -139,29 +146,41 @@ export default function HomePage() {
             and writes your comment — ready to post.
           </p>
 
-          <div className="flex items-center justify-center gap-4 flex-wrap">
+          <div className="flex items-center justify-center gap-4 flex-wrap mb-12">
             <Link
               href="/signup"
               className="rounded-xl px-6 py-3 font-semibold text-white bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] hover:opacity-90 transition"
             >
               Start for free →
             </Link>
-            <button
-              onClick={scrollToDemo}
-              className="rounded-xl px-6 py-3 font-semibold text-gray-600 border border-gray-200 hover:bg-gray-50 transition"
-            >
-              See how it works
-            </button>
+          </div>
+        </div>
+
+        {/* Community ticker — full viewport width */}
+        <div className="overflow-hidden w-full">
+          <div
+            className="flex gap-6 whitespace-nowrap"
+            style={{
+              display: 'flex',
+              width: 'max-content',
+              animation: 'ticker 30s linear infinite',
+              animationPlayState: isHovered ? 'paused' : 'running',
+            }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+          >
+            {[...communities, ...communities].map((c, i) => (
+              <span key={i} className="text-sm text-gray-400 shrink-0">
+                {c}
+                <span className="ml-6 text-gray-200">·</span>
+              </span>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ── 3. Live Demo ── FIX 2+6: white bg, no border-y, redesigned */}
-      <section
-        ref={demoRef}
-        id="demo"
-        className="py-24 px-6 bg-white"
-      >
+      {/* ── 3. Live Demo ── */}
+      <section id="demo" className="py-24 px-6 bg-white">
         <div className="max-w-xl mx-auto">
           <div className="text-center mb-10">
             <span className="inline-block mb-4 text-xs font-semibold uppercase tracking-widest bg-gradient-to-r from-[#4B6BF5] to-[#7B4BF5] bg-clip-text text-transparent">
@@ -308,5 +327,6 @@ export default function HomePage() {
       </footer>
 
     </div>
+    </>
   )
 }
