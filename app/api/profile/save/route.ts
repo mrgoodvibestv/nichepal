@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
 
     const upsertData: Record<string, unknown> = {
       user_id: user.id,
+      email: user.email,
       url,
       business_name,
       positioning,
